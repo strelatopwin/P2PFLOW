@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -21,7 +20,7 @@ export default function LoginPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email }),
       });
 
       if (!response.ok) {
@@ -44,7 +43,7 @@ export default function LoginPage() {
       <section className="w-full max-w-md rounded-xl bg-white p-6 shadow-sm">
         <h1 className="mb-2 text-2xl font-semibold text-zinc-900">Login</h1>
         <p className="mb-5 text-sm text-zinc-600">
-          Sign in to request access to the arbitrage table.
+          Enter email to request access to the arbitrage table.
         </p>
 
         <form className="space-y-3" onSubmit={onSubmit}>
@@ -54,17 +53,6 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              required
-              className="w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-400"
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-1 block text-sm text-zinc-700">Password</span>
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
               required
               className="w-full rounded-md border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-400"
             />
@@ -81,7 +69,7 @@ export default function LoginPage() {
             disabled={isLoading}
             className="w-full rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60"
           >
-            {isLoading ? "Signing in..." : "Sign in"}
+            {isLoading ? "Sending request..." : "Request access"}
           </button>
         </form>
       </section>

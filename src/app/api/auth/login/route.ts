@@ -1,15 +1,10 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/server/supabase/supabase.server";
-import {
-  AUTH_COOKIE_ACCESS_TOKEN,
-  AUTH_COOKIE_REFRESH_TOKEN,
-  AUTH_COOKIE_USER_ID,
-} from "@/server/auth/auth.constants";
+import { AUTH_COOKIE_SESSION } from "@/server/auth/auth.constants";
+import { createSessionToken, createUserIdFromEmail } from "@/server/auth/auth.session";
 import { ensureAccessRequest } from "@/server/access/access.service";
 
 type LoginBody = {
   email?: string;
-  password?: string;
 };
 
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
@@ -17,27 +12,19 @@ const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as LoginBody;
-    const email = body.email?.trim() ?? "";
-    const password = body.password ?? "";
+    const email = body.email?.trim().toLowerCase() ?? "";
 
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password are required" },
-        { status: 400 }
-      );
+    if (!email) {
+      return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
-    const supabase = createSupabaseServerClient();
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error || !data.session || !data.user) {
-      return NextResponse.json(
-        { error: error?.message ?? "Invalid credentials" },
-        { status: 401 }
-      );
+    const emailIsValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!emailIsValid) {
+      return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
     }
 
-    await ensureAccessRequest(data.user.id, data.user.email ?? email);
+    const userId = createUserIdFromEmail(email);
+    await ensureAccessRequest(userId, email);
 
     const response = NextResponse.json({
       ok: true,
@@ -45,21 +32,7 @@ export async function POST(request: Request) {
     });
 
     const secure = process.env.NODE_ENV === "production";
-    response.cookies.set(AUTH_COOKIE_ACCESS_TOKEN, data.session.access_token, {
-      httpOnly: true,
-      secure,
-      sameSite: "lax",
-      path: "/",
-      maxAge: COOKIE_MAX_AGE_SECONDS,
-    });
-    response.cookies.set(AUTH_COOKIE_REFRESH_TOKEN, data.session.refresh_token, {
-      httpOnly: true,
-      secure,
-      sameSite: "lax",
-      path: "/",
-      maxAge: COOKIE_MAX_AGE_SECONDS,
-    });
-    response.cookies.set(AUTH_COOKIE_USER_ID, data.user.id, {
+    response.cookies.set(AUTH_COOKIE_SESSION, createSessionToken(email), {
       httpOnly: true,
       secure,
       sameSite: "lax",

@@ -76,8 +76,8 @@ export default function WaitingAccessPage() {
           Access verification
         </h1>
         <p className="mb-4 text-sm text-zinc-600">
-          Your login is successful. Access to the table is granted manually.
-          We will notify admin in Telegram and update this page automatically.
+          Your access request is created. Admin was notified in Telegram.
+          After approval you will be redirected to the table automatically.
         </p>
 
         <div className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700">

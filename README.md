@@ -2,7 +2,7 @@
 
 Проєкт на Next.js з:
 - live інтеграцією до ProfitArbitrage API,
-- auth через Supabase,
+- email-only auth (без реєстрації/паролю),
 - access-control через Drizzle + Postgres,
 - Telegram нотифікаціями для approve/reject доступу.
 
@@ -22,11 +22,10 @@ cp .env.example .env
 
 Обов'язкові змінні:
 
-- `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
 - `DATABASE_URL`
 - `APP_BASE_URL` (локально зазвичай `http://localhost:3000`)
 - `ACCESS_APPROVAL_SECRET` (секрет для approve endpoint)
+- `AUTH_SESSION_SECRET` (секрет підпису auth cookie)
 - `TELEGRAM_BOT_TOKEN`
 - `TELEGRAM_CHAT_ID`
 - `PROFIT_ARBITRAGE_LOGIN`
@@ -63,7 +62,7 @@ npm run dev
 
 ## 5) Як працює флоу доступу
 
-1. Користувач логіниться на `/login` (Supabase email/password).
+1. Користувач вводить email на `/login` (без паролю).
 2. Система створює/оновлює заявку доступу в `access_requests` зі статусом `pending`.
 3. В Telegram адміну відправляється повідомлення з approve URL.
 4. До approve сторінка таблиці недоступна, користувач бачить `/waiting-access`.
@@ -71,7 +70,7 @@ npm run dev
 
 ## 6) Endpoints
 
-- `POST /api/auth/login` - вхід, ставить auth cookies.
+- `POST /api/auth/login` - email request, ставить signed auth cookie.
 - `POST /api/auth/logout` - вихід, очищає cookies.
 - `GET /api/access/status` - поточний статус доступу для залогіненого юзера.
 - `GET /api/access/approve?userId=...&secret=...&action=approve|reject` - адміністраторський approve/reject.
@@ -87,5 +86,5 @@ npm run lint
 
 - `401` на `/api/market` - немає валідної auth cookie (не залогінений).
 - `403` на `/api/market` - юзер не approved.
-- `500` на login/status/market - перевір `SUPABASE_*`, `DATABASE_URL`, `PROFIT_ARBITRAGE_*`.
+- `500` на login/status/market - перевір `DATABASE_URL`, `AUTH_SESSION_SECRET`, `PROFIT_ARBITRAGE_*`.
 - Не приходить Telegram - перевір `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, і що бот має право писати в чат.
