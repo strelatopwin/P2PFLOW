@@ -148,31 +148,31 @@ export function MarketTableClient() {
   }
 
   return (
-    <main className="min-h-screen p-6">
-      <section className="mx-auto w-full max-w-7xl rounded-xl bg-white p-5 shadow-sm">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <main className="min-h-screen p-3 md:p-6">
+      <section className="mx-auto w-full max-w-7xl rounded-xl bg-white p-3 shadow-sm md:p-5">
+        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <h1 className="text-xl font-semibold text-zinc-900">
             Арбітражний скрінер
           </h1>
-          <div className="flex items-center gap-2">
+          <div className="grid w-full grid-cols-3 gap-2 md:flex md:w-auto md:items-center">
             <input
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Пошук пари, біржі, мережі"
-              className="w-72 rounded-md border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none ring-0 focus:border-zinc-400"
+              className="col-span-3 w-full rounded-md border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none ring-0 focus:border-zinc-400 md:col-span-1 md:w-72"
             />
             <button
               type="button"
               onClick={() => setRefreshKey((current) => current + 1)}
-              className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100"
+              className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-100 md:text-sm"
             >
               {isRefreshing ? "Оновлення..." : "Оновити"}
             </button>
             <button
               type="button"
               onClick={logout}
-              className="rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+              className="rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-50 md:text-sm"
             >
               Вийти
             </button>
@@ -196,7 +196,43 @@ export function MarketTableClient() {
         ) : null}
 
         {!error && !isLoading ? (
-          <div className="overflow-x-auto">
+          <>
+            <div className="space-y-2 md:hidden">
+              {rows.length === 0 ? (
+                <div className="rounded-md border border-zinc-100 px-3 py-6 text-center text-sm text-zinc-500">
+                  За поточними фільтрами нічого не знайдено.
+                </div>
+              ) : null}
+              {rows.map((row) => (
+                <article
+                  key={row.id}
+                  className="rounded-lg border border-zinc-100 p-3"
+                >
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-sm font-semibold text-zinc-900">{row.pair}</p>
+                    <p
+                      className={`text-xs font-medium ${
+                        row.profitPercent >= 0 ? "text-emerald-600" : "text-rose-600"
+                      }`}
+                    >
+                      {formatPercent(row.profitPercent)}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-zinc-600">
+                    <span>Купівля: {formatRate(row.buyRate)}</span>
+                    <span>Продаж: {formatRate(row.sellRate)}</span>
+                    <span>Обʼєм: {formatUsd(row.volume24hUsd)}</span>
+                    <span>Спред: {formatPercent(row.spreadPercent)}</span>
+                    <span>Біржа куп.: {row.buyExchange}</span>
+                    <span>Біржа прод.: {row.sellExchange}</span>
+                    <span>Мережа: {row.network}</span>
+                    <span>Тривалість: {formatLifetime(row.lifetimeMs)}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[980px] border-separate border-spacing-0">
               <thead>
                 <tr>
@@ -284,7 +320,8 @@ export function MarketTableClient() {
                 ))}
               </tbody>
             </table>
-          </div>
+            </div>
+          </>
         ) : null}
       </section>
     </main>
