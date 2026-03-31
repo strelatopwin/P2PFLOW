@@ -63,7 +63,7 @@ npm run dev
 ## 5) Як працює флоу доступу
 
 1. Користувач вводить email на `/login` (без паролю).
-2. Система створює/оновлює заявку доступу в `access_requests` зі статусом `pending`.
+2. Система створює/оновлює заявку доступу в `access_requests` з `approved=false`.
 3. В Telegram адміну відправляється повідомлення з approve URL.
 4. До approve сторінка таблиці недоступна, користувач бачить `/waiting-access`.
 5. Після approve користувач отримує доступ до `/` та `/api/market`.
@@ -82,7 +82,18 @@ npm run dev
 npm run lint
 ```
 
-## 8) Troubleshooting
+## 8) Міграція (remove `status`)
+
+Якщо таблиця вже була створена раніше з колонкою `status`, застосуй SQL:
+
+```sql
+ALTER TABLE "access_requests"
+DROP COLUMN IF EXISTS "status";
+```
+
+Готовий файл: `drizzle/0001_drop_status_from_access_requests.sql`
+
+## 9) Troubleshooting
 
 - `401` на `/api/market` - немає валідної auth cookie (не залогінений).
 - `403` на `/api/market` - юзер не approved.

@@ -6,12 +6,9 @@ import type { AccessState, AccessStatus } from "@/server/access/access.types";
 
 const NOTIFICATION_COOLDOWN_MS = 5 * 60 * 1000;
 
-function mapStatus(status: string, approved: boolean): AccessStatus {
+function mapStatus(approved: boolean): AccessStatus {
   if (approved) {
     return "approved";
-  }
-  if (status === "rejected") {
-    return "rejected";
   }
   return "pending";
 }
@@ -65,7 +62,6 @@ export async function ensureAccessRequest(userId: string, email: string): Promis
     await db.insert(accessRequestsTable).values({
       userId,
       email,
-      status: "pending",
       approved: false,
     });
   } else if (latest.email !== email) {
@@ -90,7 +86,7 @@ export async function getAccessState(userId: string, email: string): Promise<Acc
     return { status: "pending", approved: false };
   }
 
-  const status = mapStatus(latest.status, latest.approved);
+  const status = mapStatus(latest.approved);
   return {
     status,
     approved: status === "approved",
@@ -102,7 +98,6 @@ export async function approveAccess(userId: string): Promise<void> {
   await db
     .update(accessRequestsTable)
     .set({
-      status: "approved",
       approved: true,
       approvedAt: new Date(),
       updatedAt: new Date(),
@@ -115,8 +110,8 @@ export async function rejectAccess(userId: string): Promise<void> {
   await db
     .update(accessRequestsTable)
     .set({
-      status: "rejected",
       approved: false,
+      approvedAt: null,
       updatedAt: new Date(),
     })
     .where(eq(accessRequestsTable.userId, userId));

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type AccessStatusResponse = {
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved";
   approved: boolean;
 };
 

@@ -1,4 +1,4 @@
-export type AccessStatus = "pending" | "approved" | "rejected";
+export type AccessStatus = "pending" | "approved";
 
 export type AccessState = {
   status: AccessStatus;
