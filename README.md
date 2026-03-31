@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Crypto Exchange Screener
 
-## Getting Started
+Проєкт на Next.js з:
+- live інтеграцією до ProfitArbitrage API,
+- auth через Supabase,
+- access-control через Drizzle + Postgres,
+- Telegram нотифікаціями для approve/reject доступу.
 
-First, run the development server:
+## 1) Встановлення
+
+```bash
+npm install
+```
+
+## 2) Налаштування `.env`
+
+Скопіюй `.env.example` в `.env` і заповни значення:
+
+```bash
+cp .env.example .env
+```
+
+Обов'язкові змінні:
+
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `DATABASE_URL`
+- `APP_BASE_URL` (локально зазвичай `http://localhost:3000`)
+- `ACCESS_APPROVAL_SECRET` (секрет для approve endpoint)
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_CHAT_ID`
+- `PROFIT_ARBITRAGE_LOGIN`
+- `PROFIT_ARBITRAGE_PASSWORD`
+
+Опційні:
+
+- `PROFIT_ARBITRAGE_FID` (default: `profitarbitrage`)
+- `PROFIT_ARBITRAGE_BUY_EXCHANGES`
+- `PROFIT_ARBITRAGE_SELL_EXCHANGES`
+
+## 3) Підняти схему БД (Drizzle)
+
+Для локального старту достатньо:
+
+```bash
+npm run db:push
+```
+
+Якщо хочеш згенерувати міграції:
+
+```bash
+npm run db:generate
+npm run db:push
+```
+
+## 4) Запуск
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Далі відкрий [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 5) Як працює флоу доступу
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Користувач логіниться на `/login` (Supabase email/password).
+2. Система створює/оновлює заявку доступу в `access_requests` зі статусом `pending`.
+3. В Telegram адміну відправляється повідомлення з approve URL.
+4. До approve сторінка таблиці недоступна, користувач бачить `/waiting-access`.
+5. Після approve користувач отримує доступ до `/` та `/api/market`.
 
-## Learn More
+## 6) Endpoints
 
-To learn more about Next.js, take a look at the following resources:
+- `POST /api/auth/login` - вхід, ставить auth cookies.
+- `POST /api/auth/logout` - вихід, очищає cookies.
+- `GET /api/access/status` - поточний статус доступу для залогіненого юзера.
+- `GET /api/access/approve?userId=...&secret=...&action=approve|reject` - адміністраторський approve/reject.
+- `GET /api/market` - дані таблиці (доступно лише для авторизованих і approved).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 7) Перевірка
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run lint
+```
 
-## Deploy on Vercel
+## 8) Troubleshooting
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `401` на `/api/market` - немає валідної auth cookie (не залогінений).
+- `403` на `/api/market` - юзер не approved.
+- `500` на login/status/market - перевір `SUPABASE_*`, `DATABASE_URL`, `PROFIT_ARBITRAGE_*`.
+- Не приходить Telegram - перевір `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, і що бот має право писати в чат.
