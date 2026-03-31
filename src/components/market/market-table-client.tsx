@@ -18,6 +18,14 @@ type ApiResponse = {
   };
 };
 
+const AUTO_REFRESH_OPTIONS = [
+  { value: 0, label: "Не оновлювати" },
+  { value: 5, label: "Кожні 5 с" },
+  { value: 10, label: "Кожні 10 с" },
+  { value: 15, label: "Кожні 15 с" },
+  { value: 30, label: "Кожні 30 с" },
+];
+
 const SORTABLE_COLUMNS: Array<{ label: string; key: SortBy }> = [
   { label: "Валютна пара", key: "pair" },
   { label: "Курс купівлі", key: "buyRate" },
@@ -77,6 +85,7 @@ export function MarketTableClient() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string>("");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [autoRefreshSeconds, setAutoRefreshSeconds] = useState<number>(0);
 
   const endpoint = useMemo(() => {
     const params = new URLSearchParams({
@@ -132,6 +141,32 @@ export function MarketTableClient() {
     };
   }, [endpoint, refreshKey, router]);
 
+  useEffect(() => {
+    if (autoRefreshSeconds <= 0) {
+      return;
+    }
+
+    const jitterFactor = 0.85 + Math.random() * 0.3;
+    const delayMs = Math.max(
+      3000,
+      Math.round(autoRefreshSeconds * 1000 * jitterFactor),
+    );
+
+    const timeoutId = window.setTimeout(() => {
+      if (document.visibilityState !== "visible") {
+        return;
+      }
+      if (isRefreshing) {
+        return;
+      }
+      setRefreshKey((current) => current + 1);
+    }, delayMs);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [autoRefreshSeconds, refreshKey, isRefreshing]);
+
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
@@ -155,6 +190,19 @@ export function MarketTableClient() {
             Арбітражний скрінер
           </h1>
           <div className="grid w-full grid-cols-3 gap-2 md:flex md:w-auto md:items-center">
+            <select
+              value={String(autoRefreshSeconds)}
+              onChange={(event) => {
+                setAutoRefreshSeconds(Number(event.target.value));
+              }}
+              className="col-span-3 rounded-md border border-zinc-200 px-2 py-2 text-xs text-zinc-700 outline-none ring-0 focus:border-zinc-400 md:col-span-1 md:text-sm"
+            >
+              {AUTO_REFRESH_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
             <input
               type="search"
               value={search}

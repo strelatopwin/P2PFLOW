@@ -6,3 +6,4 @@ export const PROFIT_ARBITRAGE_DEFAULT_EXCHANGES =
   "binance,bybit,okex,gate,mexc,kucoin,bitget,bingx,huobi";
 export const PROFIT_ARBITRAGE_DEFAULT_FID = "profitarbitrage";
 export const PROFIT_ARBITRAGE_TOKEN_TTL_FALLBACK_MS = 10 * 60 * 1000;
+export const PROFIT_ARBITRAGE_MIN_REQUEST_INTERVAL_MS_DEFAULT = 5000;

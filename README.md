@@ -34,6 +34,7 @@ cp .env.example .env
 Опційні:
 
 - `PROFIT_ARBITRAGE_FID` (default: `profitarbitrage`)
+- `PROFIT_ARBITRAGE_MIN_REQUEST_INTERVAL_MS` (default: `5000`)
 - `PROFIT_ARBITRAGE_BUY_EXCHANGES`
 - `PROFIT_ARBITRAGE_SELL_EXCHANGES`
 
