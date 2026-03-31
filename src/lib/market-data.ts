@@ -124,15 +124,13 @@ type QueryOptions = {
   limit: number;
 };
 
-export function getMarketRows({
-  search,
-  sortBy,
-  sortOrder,
-  limit,
-}: QueryOptions): MarketRow[] {
+export function applyQueryToMarketRows(
+  rows: MarketRow[],
+  { search, sortBy, sortOrder, limit }: QueryOptions
+): MarketRow[] {
   const normalizedSearch = search.trim().toLowerCase();
   const searchedRows = normalizedSearch
-    ? BASE_ROWS.filter((item) => {
+    ? rows.filter((item) => {
         return (
           item.pair.toLowerCase().includes(normalizedSearch) ||
           item.buyExchange.toLowerCase().includes(normalizedSearch) ||
@@ -140,7 +138,7 @@ export function getMarketRows({
           item.network.toLowerCase().includes(normalizedSearch)
         );
       })
-    : [...BASE_ROWS];
+    : [...rows];
 
   const access = SORT_ACCESSOR[sortBy];
   searchedRows.sort((left, right) => {
@@ -157,4 +155,18 @@ export function getMarketRows({
   });
 
   return searchedRows.slice(0, limit);
+}
+
+export function getMarketRows({
+  search,
+  sortBy,
+  sortOrder,
+  limit,
+}: QueryOptions): MarketRow[] {
+  return applyQueryToMarketRows(BASE_ROWS, {
+    search,
+    sortBy,
+    sortOrder,
+    limit,
+  });
 }

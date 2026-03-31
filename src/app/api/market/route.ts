@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
-import { getMarketRows } from "@/lib/market-data";
+import { applyQueryToMarketRows, getMarketRows } from "@/lib/market-data";
+import { getLiveMarketRows } from "@/lib/profit-arbitrage";
 import type { SortBy, SortOrder } from "@/types/market";
 
 const VALID_SORT_FIELDS: SortBy[] = [
@@ -40,13 +41,33 @@ export async function GET(request: NextRequest) {
   const sortBy = parseSortBy(params.get("sortBy"));
   const sortOrder = parseSortOrder(params.get("sortOrder"));
   const limit = parseLimit(params.get("limit"));
+  const sourceMode = params.get("source");
+  const useMockOnly = sourceMode === "mock";
+  const shouldIncludeDebug = params.get("debug") === "1";
 
-  const rows = getMarketRows({
+  let rows = getMarketRows({
     search,
     sortBy,
     sortOrder,
     limit,
   });
+  let source: "live" | "mock" = "mock";
+  let error: string | null = null;
+
+  if (!useMockOnly) {
+    try {
+      const liveRows = await getLiveMarketRows(Math.max(limit * 3, 150));
+      rows = applyQueryToMarketRows(liveRows, {
+        search,
+        sortBy,
+        sortOrder,
+        limit,
+      });
+      source = "live";
+    } catch (caught) {
+      error = caught instanceof Error ? caught.message : "Unknown live error";
+    }
+  }
 
   return Response.json({
     rows,
@@ -56,7 +77,9 @@ export async function GET(request: NextRequest) {
       sortOrder,
       limit,
       total: rows.length,
+      source,
       updatedAt: new Date().toISOString(),
+      ...(shouldIncludeDebug ? { error } : {}),
     },
   });
 }

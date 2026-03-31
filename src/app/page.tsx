@@ -11,6 +11,8 @@ type ApiResponse = {
     sortOrder: SortOrder;
     limit: number;
     total: number;
+    source?: "live" | "mock";
+    error?: string | null;
     updatedAt: string;
   };
 };
@@ -64,6 +66,7 @@ export default function Home() {
   const [sortBy, setSortBy] = useState<SortBy>("profitPercent");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [updatedAt, setUpdatedAt] = useState<string>("");
+  const [dataSource, setDataSource] = useState<"live" | "mock">("mock");
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string>("");
@@ -95,6 +98,7 @@ export default function Home() {
         if (!ignore) {
           setRows(payload.rows);
           setUpdatedAt(payload.meta.updatedAt);
+          setDataSource(payload.meta.source ?? "mock");
         }
       } catch (caught) {
         if (!ignore && !controller.signal.aborted) {
@@ -153,7 +157,9 @@ export default function Home() {
         </div>
 
         <div className="mb-3 text-xs text-zinc-500">
-          {updatedAt ? `Last update: ${new Date(updatedAt).toLocaleString()}` : ""}
+          {updatedAt
+            ? `Last update: ${new Date(updatedAt).toLocaleString()} (${dataSource})`
+            : ""}
         </div>
 
         {error ? (
