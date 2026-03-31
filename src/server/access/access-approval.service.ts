@@ -26,15 +26,15 @@ function wantsHtmlResponse(request: NextRequest): boolean {
 function createHtmlRedirectResponse(status: AccessApprovalStatus): Response {
   const message =
     status === "approved"
-      ? "Access approved. Redirecting to table..."
-      : "Access rejected. Redirecting to home...";
+      ? "Доступ схвалено. Перенаправляємо до таблиці..."
+      : "Доступ відхилено. Перенаправляємо на головну...";
 
   const html = `<!doctype html>
 <html>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Access ${status}</title>
+    <title>${status === "approved" ? "Доступ схвалено" : "Доступ відхилено"}</title>
     <meta http-equiv="refresh" content="2;url=/" />
     <style>
       body { font-family: Arial, sans-serif; background: #f3f4f6; margin: 0; }
@@ -45,7 +45,7 @@ function createHtmlRedirectResponse(status: AccessApprovalStatus): Response {
   </head>
   <body>
     <section class="card">
-      <h1 class="title">${status.toUpperCase()}</h1>
+      <h1 class="title">${status === "approved" ? "СХВАЛЕНО" : "ВІДХИЛЕНО"}</h1>
       <p class="text">${message}</p>
     </section>
     <script>
@@ -94,11 +94,11 @@ export async function handleAccessApprovalRequest(
   };
 
   if (!isAuthorized(command.secret)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: "Доступ заборонено" }, { status: 403 });
   }
 
   if (!command.userId) {
-    return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+    return NextResponse.json({ error: "Відсутній userId" }, { status: 400 });
   }
 
   const status = await executeApprovalAction(command.userId, command.action);

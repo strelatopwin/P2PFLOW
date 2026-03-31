@@ -7,13 +7,14 @@ export async function GET(request: NextRequest) {
   try {
     const user = await getAuthenticatedUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Неавторизовано" }, { status: 401 });
     }
 
     const state = await getAccessState(user.id, user.email);
     return NextResponse.json(state);
   } catch (caught) {
-    const message = caught instanceof Error ? caught.message : "Unexpected server error";
+    const message =
+      caught instanceof Error ? caught.message : "Непередбачена помилка сервера";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

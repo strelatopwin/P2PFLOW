@@ -26,10 +26,10 @@ export async function sendTelegramLoginRequestNotification(
 
   const approveLink = buildApproveLink(payload.userId);
   const lines = [
-    "New login request",
+    "Новий запит на доступ",
     `Email: ${payload.email}`,
-    `User ID: ${payload.userId}`,
-    approveLink ? `Approve: ${approveLink}` : "",
+    `ID користувача: ${payload.userId}`,
+    approveLink ? `Схвалити: ${approveLink}` : "",
   ].filter(Boolean);
 
   await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {

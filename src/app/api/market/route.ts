@@ -8,19 +8,20 @@ export async function GET(request: NextRequest) {
   try {
     const user = await getAuthenticatedUserFromRequest(request);
     if (!user) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+      return Response.json({ error: "Неавторизовано" }, { status: 401 });
     }
 
     const approved = await hasApprovedAccess(user.id);
     if (!approved) {
-      return Response.json({ error: "Forbidden" }, { status: 403 });
+      return Response.json({ error: "Доступ заборонено" }, { status: 403 });
     }
 
     const query = parseMarketRequestQuery(request.nextUrl.searchParams);
     const payload = await getMarketResponse(query);
     return Response.json(payload);
   } catch (caught) {
-    const message = caught instanceof Error ? caught.message : "Unexpected server error";
+    const message =
+      caught instanceof Error ? caught.message : "Непередбачена помилка сервера";
     return Response.json({ error: message }, { status: 500 });
   }
 }

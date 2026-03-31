@@ -25,13 +25,13 @@ export default function LoginPage() {
 
       if (!response.ok) {
         const payload = (await response.json()) as { error?: string };
-        throw new Error(payload.error ?? `Login failed with ${response.status}`);
+        throw new Error(payload.error ?? `Помилка входу: ${response.status}`);
       }
 
       router.push("/waiting-access");
       router.refresh();
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message : "Unknown error";
+      const message = caught instanceof Error ? caught.message : "Невідома помилка";
       setError(message);
     } finally {
       setIsLoading(false);
@@ -41,14 +41,14 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen flex items-center justify-center p-6">
       <section className="w-full max-w-md rounded-xl bg-white p-6 shadow-sm">
-        <h1 className="mb-2 text-2xl font-semibold text-zinc-900">Login</h1>
+        <h1 className="mb-2 text-2xl font-semibold text-zinc-900">Вхід</h1>
         <p className="mb-5 text-sm text-zinc-600">
-          Enter email to request access to the arbitrage table.
+          Введіть email, щоб надіслати запит доступу до арбітражної таблиці.
         </p>
 
         <form className="space-y-3" onSubmit={onSubmit}>
           <label className="block">
-            <span className="mb-1 block text-sm text-zinc-700">Email</span>
+            <span className="mb-1 block text-sm text-zinc-700">Електронна пошта</span>
             <input
               type="email"
               value={email}
@@ -69,7 +69,7 @@ export default function LoginPage() {
             disabled={isLoading}
             className="w-full rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60"
           >
-            {isLoading ? "Sending request..." : "Request access"}
+            {isLoading ? "Надсилання запиту..." : "Запросити доступ"}
           </button>
         </form>
       </section>

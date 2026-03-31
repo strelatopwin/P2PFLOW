@@ -15,12 +15,18 @@ export async function POST(request: Request) {
     const email = body.email?.trim().toLowerCase() ?? "";
 
     if (!email) {
-      return NextResponse.json({ error: "Email is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Потрібно вказати електронну пошту" },
+        { status: 400 }
+      );
     }
 
     const emailIsValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     if (!emailIsValid) {
-      return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Некоректний формат електронної пошти" },
+        { status: 400 }
+      );
     }
 
     const userId = createUserIdFromEmail(email);
@@ -42,7 +48,8 @@ export async function POST(request: Request) {
 
     return response;
   } catch (caught) {
-    const message = caught instanceof Error ? caught.message : "Unexpected server error";
+    const message =
+      caught instanceof Error ? caught.message : "Непередбачена помилка сервера";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

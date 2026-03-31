@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     return await handleAccessApprovalRequest(request);
   } catch (caught) {
     const message =
-      caught instanceof Error ? caught.message : "Unexpected server error";
+      caught instanceof Error ? caught.message : "Непередбачена помилка сервера";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

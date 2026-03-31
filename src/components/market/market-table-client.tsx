@@ -19,13 +19,13 @@ type ApiResponse = {
 };
 
 const SORTABLE_COLUMNS: Array<{ label: string; key: SortBy }> = [
-  { label: "Currency pair", key: "pair" },
-  { label: "Buy rate", key: "buyRate" },
-  { label: "Sell rate", key: "sellRate" },
-  { label: "Volume", key: "volume24hUsd" },
-  { label: "Profit", key: "profitPercent" },
-  { label: "Spread", key: "spreadPercent" },
-  { label: "Lifetime", key: "lifetimeMs" },
+  { label: "Валютна пара", key: "pair" },
+  { label: "Курс купівлі", key: "buyRate" },
+  { label: "Курс продажу", key: "sellRate" },
+  { label: "Обʼєм", key: "volume24hUsd" },
+  { label: "Профіт", key: "profitPercent" },
+  { label: "Спред", key: "spreadPercent" },
+  { label: "Тривалість", key: "lifetimeMs" },
 ];
 
 function formatUsd(value: number): string {
@@ -58,7 +58,11 @@ function formatLifetime(ms: number): string {
   const totalSeconds = Math.floor(ms / 1000);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
-  return `${minutes}m ${seconds}s`;
+  return `${minutes}хв ${seconds}с`;
+}
+
+function formatDataSource(source: "live" | "mock"): string {
+  return source === "live" ? "реальні дані" : "тестові дані";
 }
 
 export function MarketTableClient() {
@@ -98,7 +102,7 @@ export function MarketTableClient() {
           return;
         }
         if (!response.ok) {
-          throw new Error(`Request failed with ${response.status}`);
+          throw new Error(`Помилка запиту: ${response.status}`);
         }
         const payload: ApiResponse = await response.json();
         if (!ignore) {
@@ -109,8 +113,8 @@ export function MarketTableClient() {
       } catch (caught) {
         if (!ignore && !controller.signal.aborted) {
           const message =
-            caught instanceof Error ? caught.message : "Unknown error";
-          setError(`Cannot load market data: ${message}`);
+            caught instanceof Error ? caught.message : "Невідома помилка";
+          setError(`Не вдалося завантажити ринкові дані: ${message}`);
         }
       } finally {
         if (!ignore) {
@@ -148,14 +152,14 @@ export function MarketTableClient() {
       <section className="mx-auto w-full max-w-7xl rounded-xl bg-white p-5 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-xl font-semibold text-zinc-900">
-            Arbitrage Screener
+            Арбітражний скрінер
           </h1>
           <div className="flex items-center gap-2">
             <input
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search pair, exchange, network"
+              placeholder="Пошук пари, біржі, мережі"
               className="w-72 rounded-md border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none ring-0 focus:border-zinc-400"
             />
             <button
@@ -163,21 +167,21 @@ export function MarketTableClient() {
               onClick={() => setRefreshKey((current) => current + 1)}
               className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100"
             >
-              {isRefreshing ? "Refreshing..." : "Refresh"}
+              {isRefreshing ? "Оновлення..." : "Оновити"}
             </button>
             <button
               type="button"
               onClick={logout}
               className="rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
             >
-              Logout
+              Вийти
             </button>
           </div>
         </div>
 
         <div className="mb-3 text-xs text-zinc-500">
           {updatedAt
-            ? `Last update: ${new Date(updatedAt).toLocaleString()} (${dataSource})`
+            ? `Останнє оновлення: ${new Date(updatedAt).toLocaleString()} (${formatDataSource(dataSource)})`
             : ""}
         </div>
 
@@ -188,7 +192,7 @@ export function MarketTableClient() {
         ) : null}
 
         {!error && isLoading ? (
-          <div className="py-8 text-sm text-zinc-500">Loading market data...</div>
+          <div className="py-8 text-sm text-zinc-500">Завантаження ринкових даних...</div>
         ) : null}
 
         {!error && !isLoading ? (
@@ -215,13 +219,13 @@ export function MarketTableClient() {
                     );
                   })}
                   <th className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-600">
-                    Buy exchange
+                    Біржа купівлі
                   </th>
                   <th className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-600">
-                    Sell exchange
+                    Біржа продажу
                   </th>
                   <th className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-600">
-                    Network
+                    Мережа
                   </th>
                 </tr>
               </thead>
@@ -232,7 +236,7 @@ export function MarketTableClient() {
                       colSpan={10}
                       className="px-3 py-8 text-center text-sm text-zinc-500"
                     >
-                      No rows found for the current filter.
+                      За поточними фільтрами нічого не знайдено.
                     </td>
                   </tr>
                 ) : null}

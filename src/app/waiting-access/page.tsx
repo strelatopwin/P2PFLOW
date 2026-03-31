@@ -29,7 +29,7 @@ export default function WaitingAccessPage() {
           return;
         }
         if (!response.ok) {
-          throw new Error(`Status request failed with ${response.status}`);
+          throw new Error(`Помилка перевірки статусу: ${response.status}`);
         }
 
         const payload = (await response.json()) as AccessStatusResponse;
@@ -44,7 +44,7 @@ export default function WaitingAccessPage() {
         }
       } catch (caught) {
         if (!stopped) {
-          const message = caught instanceof Error ? caught.message : "Unknown error";
+          const message = caught instanceof Error ? caught.message : "Невідома помилка";
           setError(message);
         }
       } finally {
@@ -73,17 +73,21 @@ export default function WaitingAccessPage() {
     <main className="min-h-screen flex items-center justify-center p-6">
       <section className="w-full max-w-lg rounded-xl bg-white p-6 shadow-sm">
         <h1 className="mb-2 text-2xl font-semibold text-zinc-900">
-          Access verification
+          Перевірка доступу
         </h1>
         <p className="mb-4 text-sm text-zinc-600">
-          Your access request is created. Admin was notified in Telegram.
-          After approval you will be redirected to the table automatically.
+          Ваш запит на доступ створено. Адміністратор отримав повідомлення у Telegram.
+          Після схвалення ви будете автоматично перенаправлені до таблиці.
         </p>
 
         <div className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700">
-          Status:{" "}
+          Статус:{" "}
           <span className="font-medium">
-            {isLoading ? "checking..." : status}
+            {isLoading
+              ? "перевірка..."
+              : status === "approved"
+                ? "схвалено"
+                : "очікує схвалення"}
           </span>
         </div>
 
@@ -99,14 +103,14 @@ export default function WaitingAccessPage() {
             onClick={() => router.refresh()}
             className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100"
           >
-            Refresh
+            Оновити
           </button>
           <button
             type="button"
             onClick={logout}
             className="rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
           >
-            Logout
+            Вийти
           </button>
         </div>
       </section>
