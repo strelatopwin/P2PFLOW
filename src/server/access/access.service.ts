@@ -3,6 +3,7 @@ import { getDb } from "@/server/db/client";
 import { accessRequestsTable } from "@/server/db/schema";
 import { sendTelegramLoginRequestNotification } from "@/server/notifications/telegram.service";
 import type { AccessState, AccessStatus } from "@/server/access/access.types";
+import { createUserIdFromEmail } from "@/server/auth/auth.session";
 
 const NOTIFICATION_COOLDOWN_MS = 5 * 60 * 1000;
 
@@ -11,6 +12,26 @@ function mapStatus(approved: boolean): AccessStatus {
     return "approved";
   }
   return "pending";
+}
+
+function normalizeEmail(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function isAccessRequestExemptEmail(email: string): boolean {
+  const exemptEmail = process.env.PROFIT_ARBITRAGE_LOGIN;
+  if (!exemptEmail) {
+    return false;
+  }
+  return normalizeEmail(email) === normalizeEmail(exemptEmail);
+}
+
+function isAccessRequestExemptUserId(userId: string): boolean {
+  const exemptEmail = process.env.PROFIT_ARBITRAGE_LOGIN;
+  if (!exemptEmail) {
+    return false;
+  }
+  return userId === createUserIdFromEmail(exemptEmail);
 }
 
 async function getLatestAccessRequest(userId: string) {
@@ -55,7 +76,14 @@ async function notifyIfNeeded(userId: string, email: string): Promise<void> {
     .where(eq(accessRequestsTable.id, latest.id));
 }
 
-export async function ensureAccessRequest(userId: string, email: string): Promise<void> {
+export async function ensureAccessRequest(
+  userId: string,
+  email: string,
+): Promise<void> {
+  if (isAccessRequestExemptEmail(email)) {
+    return;
+  }
+
   const latest = await getLatestAccessRequest(userId);
   if (!latest) {
     const db = getDb();
@@ -78,7 +106,17 @@ export async function ensureAccessRequest(userId: string, email: string): Promis
   await notifyIfNeeded(userId, email);
 }
 
-export async function getAccessState(userId: string, email: string): Promise<AccessState> {
+export async function getAccessState(
+  userId: string,
+  email: string,
+): Promise<AccessState> {
+  if (isAccessRequestExemptEmail(email)) {
+    return {
+      status: "approved",
+      approved: true,
+    };
+  }
+
   await ensureAccessRequest(userId, email);
   const latest = await getLatestAccessRequest(userId);
 
@@ -118,12 +156,19 @@ export async function rejectAccess(userId: string): Promise<void> {
 }
 
 export async function hasApprovedAccess(userId: string): Promise<boolean> {
+  if (isAccessRequestExemptUserId(userId)) {
+    return true;
+  }
+
   const db = getDb();
   const rows = await db
     .select({ count: sql<number>`count(*)` })
     .from(accessRequestsTable)
     .where(
-      and(eq(accessRequestsTable.userId, userId), eq(accessRequestsTable.approved, true))
+      and(
+        eq(accessRequestsTable.userId, userId),
+        eq(accessRequestsTable.approved, true),
+      ),
     );
 
   return Number(rows[0]?.count ?? 0) > 0;
