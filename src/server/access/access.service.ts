@@ -7,7 +7,7 @@ import type { AccessState, AccessStatus } from "@/server/access/access.types";
 const NOTIFICATION_COOLDOWN_MS = 5 * 60 * 1000;
 
 function mapStatus(status: string, approved: boolean): AccessStatus {
-  if (approved || status === "approved") {
+  if (approved) {
     return "approved";
   }
   if (status === "rejected") {
@@ -33,7 +33,7 @@ async function notifyIfNeeded(userId: string, email: string): Promise<void> {
   if (!latest) {
     return;
   }
-  if (latest.approved || latest.status === "approved") {
+  if (latest.approved) {
     return;
   }
 
