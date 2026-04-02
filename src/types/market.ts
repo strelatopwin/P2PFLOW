@@ -18,7 +18,12 @@ export type MarketRow = {
   sellRate: number;
   volume24hUsd: number;
   profitPercent: number;
+  profitDisplay: string;
   spreadPercent: number;
   lifetimeMs: number;
   network: string;
+  withdrawalNetworkEntries: Array<{
+    text: string;
+    expectedProfitIndex: number;
+  }>;
 };
