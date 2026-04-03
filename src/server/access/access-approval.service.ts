@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { API_ERROR_CODE } from "@/lib/api-error-codes";
+import { jsonError } from "@/lib/api-error-response";
 import { approveAccess, rejectAccess } from "@/server/access/access.service";
 
 type AccessApprovalStatus = "approved" | "rejected";
@@ -94,11 +96,11 @@ export async function handleAccessApprovalRequest(
   };
 
   if (!isAuthorized(command.secret)) {
-    return NextResponse.json({ error: "Доступ заборонено" }, { status: 403 });
+    return jsonError(403, API_ERROR_CODE.APPROVAL_FORBIDDEN);
   }
 
   if (!command.userId) {
-    return NextResponse.json({ error: "Відсутній userId" }, { status: 400 });
+    return jsonError(400, API_ERROR_CODE.MISSING_USER_ID);
   }
 
   const status = await executeApprovalAction(command.userId, command.action);

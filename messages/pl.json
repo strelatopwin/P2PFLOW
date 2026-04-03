@@ -1,0 +1,90 @@
+{
+  "Metadata": {
+    "title": "Krypto arbitraż",
+    "description": "Screener arbitrażowy z kontrolowanym dostępem"
+  },
+  "LocaleSwitcher": {
+    "ariaLabel": "Zmień język",
+    "uk": "Ukraiński",
+    "en": "Angielski",
+    "ru": "Rosyjski",
+    "pl": "Polski"
+  },
+  "Login": {
+    "title": "Logowanie",
+    "description": "Podaj e-mail, aby wysłać prośbę o dostęp do tabeli arbitrażu.",
+    "emailLabel": "E-mail",
+    "submit": "Poproś o dostęp",
+    "submitLoading": "Wysyłanie prośby..."
+  },
+  "WaitingAccess": {
+    "title": "Weryfikacja dostępu",
+    "description": "Twoja prośba o dostęp została utworzona. Administrator otrzymał powiadomienie w Telegramie. Po zatwierdzeniu zostaniesz automatycznie przekierowany do tabeli.",
+    "statusLabel": "Status:",
+    "statusChecking": "sprawdzanie...",
+    "statusApproved": "zatwierdzono",
+    "statusPending": "oczekuje na zatwierdzenie",
+    "refresh": "Odśwież",
+    "logout": "Wyloguj"
+  },
+  "Market": {
+    "title": "Screener arbitrażowy",
+    "searchPlaceholder": "Szukaj pary, giełdy, sieci",
+    "refresh": "Odśwież",
+    "refreshing": "Odświeżanie...",
+    "logout": "Wyloguj",
+    "lastUpdated": "Ostatnia aktualizacja: {time} ({source})",
+    "dataSourceLive": "dane na żywo",
+    "dataSourceMock": "dane testowe",
+    "loadErrorPrefix": "Nie udało się wczytać danych rynkowych:",
+    "loading": "Wczytywanie danych rynkowych...",
+    "empty": "Brak wyników dla bieżących filtrów.",
+    "mobileBuy": "Kupno:",
+    "mobileSell": "Sprzedaż:",
+    "mobileVolume": "Wolumen:",
+    "mobileSpread": "Spread:",
+    "mobileBuyExchange": "Giełda kupna:",
+    "mobileSellExchange": "Giełda sprzedaży:",
+    "mobileNetwork": "Sieć:",
+    "mobileLifetime": "Czas trwania:",
+    "thBuyExchange": "Giełda kupna",
+    "thSellExchange": "Giełda sprzedaży",
+    "thNetwork": "Sieć",
+    "lifetimeZero": "0ms",
+    "lifetime": "{minutes}min {seconds}s",
+    "autoRefresh": {
+      "off": "Bez odświeżania",
+      "sec5": "Co 5 s",
+      "sec10": "Co 10 s",
+      "sec15": "Co 15 s",
+      "sec30": "Co 30 s"
+    },
+    "columns": {
+      "pair": "Para",
+      "buyRate": "Kurs kupna",
+      "sellRate": "Kurs sprzedaży",
+      "volume24hUsd": "Wolumen",
+      "profitPercent": "Zysk",
+      "spreadPercent": "Spread",
+      "lifetimeMs": "Czas trwania"
+    }
+  },
+  "NotFound": {
+    "message": "Nie znaleziono strony"
+  },
+  "Common": {
+    "unknownError": "Nieznany błąd"
+  },
+  "ApiErrors": {
+    "UNAUTHORIZED": "Brak autoryzacji",
+    "FORBIDDEN": "Odmowa dostępu",
+    "EMAIL_REQUIRED": "Podaj adres e-mail",
+    "EMAIL_INVALID": "Nieprawidłowy format e-mail",
+    "SERVER_ERROR": "Nieoczekiwany błąd serwera",
+    "MISSING_USER_ID": "Brak userId",
+    "APPROVAL_FORBIDDEN": "Odmowa dostępu",
+    "HTTP_STATUS": "Błąd żądania: {status}",
+    "STATUS_CHECK": "Błąd sprawdzania statusu: {status}",
+    "LOGIN_STATUS": "Błąd logowania: {status}"
+  }
+}

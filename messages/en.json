@@ -1,0 +1,90 @@
+{
+  "Metadata": {
+    "title": "Crypto Arbitrage",
+    "description": "Arbitrage screener with controlled access"
+  },
+  "LocaleSwitcher": {
+    "ariaLabel": "Change language",
+    "uk": "Ukrainian",
+    "en": "English",
+    "ru": "Russian",
+    "pl": "Polish"
+  },
+  "Login": {
+    "title": "Sign in",
+    "description": "Enter your email to request access to the arbitrage table.",
+    "emailLabel": "Email",
+    "submit": "Request access",
+    "submitLoading": "Sending request..."
+  },
+  "WaitingAccess": {
+    "title": "Access check",
+    "description": "Your access request has been created. The administrator was notified on Telegram. Once approved, you will be redirected to the table automatically.",
+    "statusLabel": "Status:",
+    "statusChecking": "checking...",
+    "statusApproved": "approved",
+    "statusPending": "pending approval",
+    "refresh": "Refresh",
+    "logout": "Log out"
+  },
+  "Market": {
+    "title": "Arbitrage screener",
+    "searchPlaceholder": "Search pair, exchange, network",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing...",
+    "logout": "Log out",
+    "lastUpdated": "Last updated: {time} ({source})",
+    "dataSourceLive": "live data",
+    "dataSourceMock": "test data",
+    "loadErrorPrefix": "Failed to load market data:",
+    "loading": "Loading market data...",
+    "empty": "Nothing matches the current filters.",
+    "mobileBuy": "Buy:",
+    "mobileSell": "Sell:",
+    "mobileVolume": "Volume:",
+    "mobileSpread": "Spread:",
+    "mobileBuyExchange": "Buy exch.:",
+    "mobileSellExchange": "Sell exch.:",
+    "mobileNetwork": "Network:",
+    "mobileLifetime": "Lifetime:",
+    "thBuyExchange": "Buy exchange",
+    "thSellExchange": "Sell exchange",
+    "thNetwork": "Network",
+    "lifetimeZero": "0ms",
+    "lifetime": "{minutes}m {seconds}s",
+    "autoRefresh": {
+      "off": "Off",
+      "sec5": "Every 5 s",
+      "sec10": "Every 10 s",
+      "sec15": "Every 15 s",
+      "sec30": "Every 30 s"
+    },
+    "columns": {
+      "pair": "Pair",
+      "buyRate": "Buy rate",
+      "sellRate": "Sell rate",
+      "volume24hUsd": "Volume",
+      "profitPercent": "Profit",
+      "spreadPercent": "Spread",
+      "lifetimeMs": "Lifetime"
+    }
+  },
+  "NotFound": {
+    "message": "Page not found"
+  },
+  "Common": {
+    "unknownError": "Unknown error"
+  },
+  "ApiErrors": {
+    "UNAUTHORIZED": "Unauthorized",
+    "FORBIDDEN": "Access denied",
+    "EMAIL_REQUIRED": "Email is required",
+    "EMAIL_INVALID": "Invalid email format",
+    "SERVER_ERROR": "Unexpected server error",
+    "MISSING_USER_ID": "Missing userId",
+    "APPROVAL_FORBIDDEN": "Access denied",
+    "HTTP_STATUS": "Request error: {status}",
+    "STATUS_CHECK": "Status check error: {status}",
+    "LOGIN_STATUS": "Sign-in error: {status}"
+  }
+}

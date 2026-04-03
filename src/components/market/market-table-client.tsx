@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
+import {
+  LocaleSwitcher,
+  toolbarSelectClassName,
+} from "@/components/locale-switcher";
+import { apiErrorMessageFromPayload } from "@/lib/api-client-messages";
 import type { MarketRow, SortBy, SortOrder } from "@/types/market";
 
 type ApiResponse = {
@@ -18,29 +24,23 @@ type ApiResponse = {
   };
 };
 
-const AUTO_REFRESH_OPTIONS = [
-  { value: 0, label: "Не оновлювати" },
-  { value: 5, label: "Кожні 5 с" },
-  { value: 10, label: "Кожні 10 с" },
-  { value: 15, label: "Кожні 15 с" },
-  { value: 30, label: "Кожні 30 с" },
+const SORT_KEYS: SortBy[] = [
+  "pair",
+  "buyRate",
+  "sellRate",
+  "volume24hUsd",
+  "profitPercent",
+  "spreadPercent",
+  "lifetimeMs",
 ];
 
-const SORTABLE_COLUMNS: Array<{ label: string; key: SortBy }> = [
-  { label: "Валютна пара", key: "pair" },
-  { label: "Курс купівлі", key: "buyRate" },
-  { label: "Курс продажу", key: "sellRate" },
-  { label: "Обʼєм", key: "volume24hUsd" },
-  { label: "Профіт", key: "profitPercent" },
-  { label: "Спред", key: "spreadPercent" },
-  { label: "Тривалість", key: "lifetimeMs" },
-];
+const AUTO_REFRESH_VALUES = [0, 5, 10, 15, 30] as const;
 
-function formatUsd(value: number): string {
+function formatUsd(value: number, locale: string): string {
   if (value >= 1_000_000) {
     return `$${(value / 1_000_000).toFixed(2)}M`;
   }
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: 2,
@@ -59,22 +59,13 @@ function formatPercent(value: number): string {
   return `${prefix}${value.toFixed(2)}%`;
 }
 
-function formatLifetime(ms: number): string {
-  if (ms <= 0) {
-    return "0ms";
-  }
-  const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}хв ${seconds}с`;
-}
-
-function formatDataSource(source: "live" | "mock"): string {
-  return source === "live" ? "реальні дані" : "тестові дані";
-}
-
 export function MarketTableClient() {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations("Market");
+  const tApi = useTranslations("ApiErrors");
+  const tCommon = useTranslations("Common");
+
   const [rows, setRows] = useState<MarketRow[]>([]);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortBy>("profitPercent");
@@ -86,6 +77,47 @@ export function MarketTableClient() {
   const [error, setError] = useState<string>("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [autoRefreshSeconds, setAutoRefreshSeconds] = useState<number>(0);
+
+  const sortableColumns = useMemo(
+    () =>
+      SORT_KEYS.map((key) => ({
+        key,
+        label: t(`columns.${key}`),
+      })),
+    [t]
+  );
+
+  const autoRefreshOptions = useMemo(
+    () =>
+      AUTO_REFRESH_VALUES.map((value) => ({
+        value,
+        label:
+          value === 0
+            ? t("autoRefresh.off")
+            : value === 5
+              ? t("autoRefresh.sec5")
+              : value === 10
+                ? t("autoRefresh.sec10")
+                : value === 15
+                  ? t("autoRefresh.sec15")
+                  : t("autoRefresh.sec30"),
+      })),
+    [t]
+  );
+
+  function formatLifetime(ms: number): string {
+    if (ms <= 0) {
+      return t("lifetimeZero");
+    }
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return t("lifetime", { minutes, seconds });
+  }
+
+  function formatDataSource(source: "live" | "mock"): string {
+    return source === "live" ? t("dataSourceLive") : t("dataSourceMock");
+  }
 
   const endpoint = useMemo(() => {
     const params = new URLSearchParams({
@@ -106,24 +138,43 @@ export function MarketTableClient() {
       setIsRefreshing(true);
       try {
         const response = await fetch(endpoint, { signal: controller.signal });
-        if (response.status === 401 || response.status === 403) {
+        let payload: {
+          errorCode?: string;
+          error?: string;
+          rows?: MarketRow[];
+          meta?: ApiResponse["meta"];
+        } = {};
+
+        try {
+          payload = await response.json();
+        } catch {
+          /* non-JSON */
+        }
+
+        if (response.status === 401) {
+          router.push("/login");
+          return;
+        }
+        if (response.status === 403) {
           router.push("/waiting-access");
           return;
         }
         if (!response.ok) {
-          throw new Error(`Помилка запиту: ${response.status}`);
+          const msg = apiErrorMessageFromPayload(payload, tApi, tApi.has);
+          throw new Error(msg);
         }
-        const payload: ApiResponse = await response.json();
+
+        const data = payload as ApiResponse;
         if (!ignore) {
-          setRows(payload.rows);
-          setUpdatedAt(payload.meta.updatedAt);
-          setDataSource(payload.meta.source ?? "mock");
+          setRows(data.rows ?? []);
+          setUpdatedAt(data.meta?.updatedAt ?? "");
+          setDataSource(data.meta?.source ?? "mock");
         }
       } catch (caught) {
         if (!ignore && !controller.signal.aborted) {
           const message =
-            caught instanceof Error ? caught.message : "Невідома помилка";
-          setError(`Не вдалося завантажити ринкові дані: ${message}`);
+            caught instanceof Error ? caught.message : tCommon("unknownError");
+          setError(`${t("loadErrorPrefix")} ${message}`);
         }
       } finally {
         if (!ignore) {
@@ -139,6 +190,8 @@ export function MarketTableClient() {
       ignore = true;
       controller.abort();
     };
+    // Intentionally omit next-intl `t`/`tApi`/`tCommon` to avoid refetch loops on locale (tree remounts).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [endpoint, refreshKey, router]);
 
   useEffect(() => {
@@ -149,7 +202,7 @@ export function MarketTableClient() {
     const jitterFactor = 0.85 + Math.random() * 0.3;
     const delayMs = Math.max(
       3000,
-      Math.round(autoRefreshSeconds * 1000 * jitterFactor),
+      Math.round(autoRefreshSeconds * 1000 * jitterFactor)
     );
 
     const timeoutId = window.setTimeout(() => {
@@ -182,22 +235,26 @@ export function MarketTableClient() {
     setSortOrder("desc");
   }
 
+  const toolbarSelectLayout =
+    "w-full shrink-0 sm:w-auto sm:min-w-[9rem]";
+
   return (
     <main className="min-h-screen p-3 md:p-6">
-      <section className="mx-auto w-full max-w-7xl rounded-xl bg-white p-3 shadow-sm md:p-5">
-        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <h1 className="text-xl font-semibold text-zinc-900">
-            Арбітражний скрінер
+      <section className="mx-auto w-full min-w-0 max-w-7xl rounded-xl bg-white p-3 shadow-sm md:p-5">
+        <div className="mb-4 flex min-w-0 flex-col gap-3 md:flex-row md:items-start md:justify-between md:gap-4">
+          <h1 className="shrink-0 text-xl font-semibold text-zinc-900">
+            {t("title")}
           </h1>
-          <div className="grid w-full grid-cols-3 gap-2 md:flex md:w-auto md:items-center">
+          <div className="flex min-w-0 w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-2">
+            <LocaleSwitcher className={toolbarSelectLayout} />
             <select
               value={String(autoRefreshSeconds)}
               onChange={(event) => {
                 setAutoRefreshSeconds(Number(event.target.value));
               }}
-              className="col-span-3 rounded-md border border-zinc-200 px-2 py-2 text-xs text-zinc-700 outline-none ring-0 focus:border-zinc-400 md:col-span-1 md:text-sm"
+              className={`${toolbarSelectClassName} ${toolbarSelectLayout}`}
             >
-              {AUTO_REFRESH_OPTIONS.map((option) => (
+              {autoRefreshOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -207,29 +264,34 @@ export function MarketTableClient() {
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Пошук пари, біржі, мережі"
-              className="col-span-3 w-full rounded-md border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none ring-0 focus:border-zinc-400 md:col-span-1 md:w-72"
+              placeholder={t("searchPlaceholder")}
+              className="min-w-0 w-full rounded-md border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none ring-0 focus:border-zinc-400 sm:min-w-[10rem] sm:flex-1 sm:basis-[12rem] md:max-w-md"
             />
-            <button
-              type="button"
-              onClick={() => setRefreshKey((current) => current + 1)}
-              className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-100 md:text-sm"
-            >
-              {isRefreshing ? "Оновлення..." : "Оновити"}
-            </button>
-            <button
-              type="button"
-              onClick={logout}
-              className="rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-50 md:text-sm"
-            >
-              Вийти
-            </button>
+            <div className="flex w-full gap-2 sm:w-auto sm:shrink-0">
+              <button
+                type="button"
+                onClick={() => setRefreshKey((current) => current + 1)}
+                className="flex-1 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-100 sm:flex-none md:text-sm"
+              >
+                {isRefreshing ? t("refreshing") : t("refresh")}
+              </button>
+              <button
+                type="button"
+                onClick={logout}
+                className="flex-1 rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-50 sm:flex-none md:text-sm"
+              >
+                {t("logout")}
+              </button>
+            </div>
           </div>
         </div>
 
         <div className="mb-3 text-xs text-zinc-500">
           {updatedAt
-            ? `Останнє оновлення: ${new Date(updatedAt).toLocaleString()} (${formatDataSource(dataSource)})`
+            ? t("lastUpdated", {
+                time: new Date(updatedAt).toLocaleString(locale),
+                source: formatDataSource(dataSource),
+              })
             : ""}
         </div>
 
@@ -240,7 +302,7 @@ export function MarketTableClient() {
         ) : null}
 
         {!error && isLoading ? (
-          <div className="py-8 text-sm text-zinc-500">Завантаження ринкових даних...</div>
+          <div className="py-8 text-sm text-zinc-500">{t("loading")}</div>
         ) : null}
 
         {!error && !isLoading ? (
@@ -248,7 +310,7 @@ export function MarketTableClient() {
             <div className="space-y-2 md:hidden">
               {rows.length === 0 ? (
                 <div className="rounded-md border border-zinc-100 px-3 py-6 text-center text-sm text-zinc-500">
-                  За поточними фільтрами нічого не знайдено.
+                  {t("empty")}
                 </div>
               ) : null}
               {rows.map((row) => (
@@ -257,117 +319,142 @@ export function MarketTableClient() {
                   className="rounded-lg border border-zinc-100 p-3"
                 >
                   <div className="mb-2 flex items-center justify-between">
-                    <p className="text-sm font-semibold text-zinc-900">{row.pair}</p>
+                    <p className="text-sm font-semibold text-zinc-900">
+                      {row.pair}
+                    </p>
                     <p
                       className={`text-xs font-medium ${
-                        row.profitPercent >= 0 ? "text-emerald-600" : "text-rose-600"
+                        row.profitPercent >= 0
+                          ? "text-emerald-600"
+                          : "text-rose-600"
                       }`}
                     >
                       {formatPercent(row.profitPercent)}
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-zinc-600">
-                    <span>Купівля: {formatRate(row.buyRate)}</span>
-                    <span>Продаж: {formatRate(row.sellRate)}</span>
-                    <span>Обʼєм: {formatUsd(row.volume24hUsd)}</span>
-                    <span>Спред: {formatPercent(row.spreadPercent)}</span>
-                    <span>Біржа куп.: {row.buyExchange}</span>
-                    <span>Біржа прод.: {row.sellExchange}</span>
-                    <span>Мережа: {row.network}</span>
-                    <span>Тривалість: {formatLifetime(row.lifetimeMs)}</span>
+                    <span>
+                      {t("mobileBuy")} {formatRate(row.buyRate)}
+                    </span>
+                    <span>
+                      {t("mobileSell")} {formatRate(row.sellRate)}
+                    </span>
+                    <span>
+                      {t("mobileVolume")}{" "}
+                      {formatUsd(row.volume24hUsd, locale)}
+                    </span>
+                    <span>
+                      {t("mobileSpread")} {formatPercent(row.spreadPercent)}
+                    </span>
+                    <span>
+                      {t("mobileBuyExchange")} {row.buyExchange}
+                    </span>
+                    <span>
+                      {t("mobileSellExchange")} {row.sellExchange}
+                    </span>
+                    <span>
+                      {t("mobileNetwork")} {row.network}
+                    </span>
+                    <span>
+                      {t("mobileLifetime")} {formatLifetime(row.lifetimeMs)}
+                    </span>
                   </div>
                 </article>
               ))}
             </div>
 
             <div className="hidden overflow-x-auto md:block">
-            <table className="w-full min-w-[980px] border-separate border-spacing-0">
-              <thead>
-                <tr>
-                  {SORTABLE_COLUMNS.map((column) => {
-                    const isActive = sortBy === column.key;
-                    return (
-                      <th
-                        key={column.key}
-                        className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-600"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => toggleSort(column.key)}
-                          className="inline-flex items-center gap-1"
-                        >
-                          {column.label}
-                          {isActive ? (sortOrder === "asc" ? "▲" : "▼") : ""}
-                        </button>
-                      </th>
-                    );
-                  })}
-                  <th className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-600">
-                    Біржа купівлі
-                  </th>
-                  <th className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-600">
-                    Біржа продажу
-                  </th>
-                  <th className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-600">
-                    Мережа
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.length === 0 ? (
+              <table className="w-full min-w-[980px] border-separate border-spacing-0">
+                <thead>
                   <tr>
-                    <td
-                      colSpan={10}
-                      className="px-3 py-8 text-center text-sm text-zinc-500"
-                    >
-                      За поточними фільтрами нічого не знайдено.
-                    </td>
+                    {sortableColumns.map((column) => {
+                      const isActive = sortBy === column.key;
+                      return (
+                        <th
+                          key={column.key}
+                          className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-600"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => toggleSort(column.key)}
+                            className="inline-flex items-center gap-1"
+                          >
+                            {column.label}
+                            {isActive ? (sortOrder === "asc" ? "▲" : "▼") : ""}
+                          </button>
+                        </th>
+                      );
+                    })}
+                    <th className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 text-left text-xs font-medium tracking-wide text-zinc-600">
+                      {t("thBuyExchange")}
+                    </th>
+                    <th className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 text-left text-xs font-medium tracking-wide text-zinc-600">
+                      {t("thSellExchange")}
+                    </th>
+                    <th className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 text-left text-xs font-medium tracking-wide text-zinc-600">
+                      {t("thNetwork")}
+                    </th>
                   </tr>
-                ) : null}
-                {rows.map((row) => (
-                  <tr key={row.id}>
-                    <td className="border-b border-zinc-100 px-3 py-3 text-sm font-medium text-zinc-900">
-                      {row.pair}
-                    </td>
-                    <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
-                      {formatRate(row.buyRate)}
-                    </td>
-                    <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
-                      {formatRate(row.sellRate)}
-                    </td>
-                    <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
-                      {formatUsd(row.volume24hUsd)}
-                    </td>
-                    <td
-                      className={`border-b border-zinc-100 px-3 py-3 text-sm ${
-                        row.profitPercent >= 0 ? "text-emerald-600" : "text-rose-600"
-                      }`}
-                    >
-                      {formatPercent(row.profitPercent)}
-                    </td>
-                    <td
-                      className={`border-b border-zinc-100 px-3 py-3 text-sm ${
-                        row.spreadPercent >= 0 ? "text-emerald-600" : "text-rose-600"
-                      }`}
-                    >
-                      {formatPercent(row.spreadPercent)}
-                    </td>
-                    <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
-                      {formatLifetime(row.lifetimeMs)}
-                    </td>
-                    <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
-                      {row.buyExchange}
-                    </td>
-                    <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
-                      {row.sellExchange}
-                    </td>
-                    <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
-                      {row.network}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {rows.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={10}
+                        className="px-3 py-8 text-center text-sm text-zinc-500"
+                      >
+                        {t("empty")}
+                      </td>
+                    </tr>
+                  ) : null}
+                  {rows.map((row) => (
+                    <tr key={row.id}>
+                      <td className="border-b border-zinc-100 px-3 py-3 text-sm font-medium text-zinc-900">
+                        {row.pair}
+                      </td>
+                      <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
+                        {formatRate(row.buyRate)}
+                      </td>
+                      <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
+                        {formatRate(row.sellRate)}
+                      </td>
+                      <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
+                        {formatUsd(row.volume24hUsd, locale)}
+                      </td>
+                      <td
+                        className={`border-b border-zinc-100 px-3 py-3 text-sm ${
+                          row.profitPercent >= 0
+                            ? "text-emerald-600"
+                            : "text-rose-600"
+                        }`}
+                      >
+                        {formatPercent(row.profitPercent)}
+                      </td>
+                      <td
+                        className={`border-b border-zinc-100 px-3 py-3 text-sm ${
+                          row.spreadPercent >= 0
+                            ? "text-emerald-600"
+                            : "text-rose-600"
+                        }`}
+                      >
+                        {formatPercent(row.spreadPercent)}
+                      </td>
+                      <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
+                        {formatLifetime(row.lifetimeMs)}
+                      </td>
+                      <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
+                        {row.buyExchange}
+                      </td>
+                      <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
+                        {row.sellExchange}
+                      </td>
+                      <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
+                        {row.network}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </>
         ) : null}

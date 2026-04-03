@@ -1,0 +1,90 @@
+{
+  "Metadata": {
+    "title": "Крипто арбитраж",
+    "description": "Арбитражный скринер с контролируемым доступом"
+  },
+  "LocaleSwitcher": {
+    "ariaLabel": "Сменить язык",
+    "uk": "Українська",
+    "en": "English",
+    "ru": "Русский",
+    "pl": "Polski"
+  },
+  "Login": {
+    "title": "Вход",
+    "description": "Введите email, чтобы отправить запрос доступа к арбитражной таблице.",
+    "emailLabel": "Электронная почта",
+    "submit": "Запросить доступ",
+    "submitLoading": "Отправка запроса..."
+  },
+  "WaitingAccess": {
+    "title": "Проверка доступа",
+    "description": "Ваш запрос на доступ создан. Администратор получил уведомление в Telegram. После одобрения вы будете автоматически перенаправлены к таблице.",
+    "statusLabel": "Статус:",
+    "statusChecking": "проверка...",
+    "statusApproved": "одобрено",
+    "statusPending": "ожидает одобрения",
+    "refresh": "Обновить",
+    "logout": "Выйти"
+  },
+  "Market": {
+    "title": "Арбитражный скринер",
+    "searchPlaceholder": "Поиск пары, биржи, сети",
+    "refresh": "Обновить",
+    "refreshing": "Обновление...",
+    "logout": "Выйти",
+    "lastUpdated": "Последнее обновление: {time} ({source})",
+    "dataSourceLive": "реальные данные",
+    "dataSourceMock": "тестовые данные",
+    "loadErrorPrefix": "Не удалось загрузить рыночные данные:",
+    "loading": "Загрузка рыночных данных...",
+    "empty": "По текущим фильтрам ничего не найдено.",
+    "mobileBuy": "Покупка:",
+    "mobileSell": "Продажа:",
+    "mobileVolume": "Объём:",
+    "mobileSpread": "Спред:",
+    "mobileBuyExchange": "Биржа покупки:",
+    "mobileSellExchange": "Биржа продажи:",
+    "mobileNetwork": "Сеть:",
+    "mobileLifetime": "Длительность:",
+    "thBuyExchange": "Биржа покупки",
+    "thSellExchange": "Биржа продажи",
+    "thNetwork": "Сеть",
+    "lifetimeZero": "0ms",
+    "lifetime": "{minutes}м {seconds}с",
+    "autoRefresh": {
+      "off": "Не обновлять",
+      "sec5": "Каждые 5 с",
+      "sec10": "Каждые 10 с",
+      "sec15": "Каждые 15 с",
+      "sec30": "Каждые 30 с"
+    },
+    "columns": {
+      "pair": "Валютная пара",
+      "buyRate": "Курс покупки",
+      "sellRate": "Курс продажи",
+      "volume24hUsd": "Объём",
+      "profitPercent": "Профит",
+      "spreadPercent": "Спред",
+      "lifetimeMs": "Длительность"
+    }
+  },
+  "NotFound": {
+    "message": "Страница не найдена"
+  },
+  "Common": {
+    "unknownError": "Неизвестная ошибка"
+  },
+  "ApiErrors": {
+    "UNAUTHORIZED": "Не авторизован",
+    "FORBIDDEN": "Доступ запрещён",
+    "EMAIL_REQUIRED": "Укажите электронную почту",
+    "EMAIL_INVALID": "Некорректный формат email",
+    "SERVER_ERROR": "Неожиданная ошибка сервера",
+    "MISSING_USER_ID": "Отсутствует userId",
+    "APPROVAL_FORBIDDEN": "Доступ запрещён",
+    "HTTP_STATUS": "Ошибка запроса: {status}",
+    "STATUS_CHECK": "Ошибка проверки статуса: {status}",
+    "LOGIN_STATUS": "Ошибка входа: {status}"
+  }
+}
