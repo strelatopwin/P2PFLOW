@@ -1,0 +1,90 @@
+{
+  "Metadata": {
+    "title": "Крипто Арбітраж",
+    "description": "Арбітражний скрінер з контрольованим доступом"
+  },
+  "LocaleSwitcher": {
+    "ariaLabel": "Змінити мову",
+    "uk": "Українська",
+    "en": "English",
+    "ru": "Русский",
+    "pl": "Polski"
+  },
+  "Login": {
+    "title": "Вхід",
+    "description": "Введіть email, щоб надіслати запит доступу до арбітражної таблиці.",
+    "emailLabel": "Електронна пошта",
+    "submit": "Запросити доступ",
+    "submitLoading": "Надсилання запиту..."
+  },
+  "WaitingAccess": {
+    "title": "Перевірка доступу",
+    "description": "Ваш запит на доступ створено. Адміністратор отримав повідомлення у Telegram. Після схвалення ви будете автоматично перенаправлені до таблиці.",
+    "statusLabel": "Статус:",
+    "statusChecking": "перевірка...",
+    "statusApproved": "схвалено",
+    "statusPending": "очікує схвалення",
+    "refresh": "Оновити",
+    "logout": "Вийти"
+  },
+  "Market": {
+    "title": "Арбітражний скрінер",
+    "searchPlaceholder": "Пошук пари, біржі, мережі",
+    "refresh": "Оновити",
+    "refreshing": "Оновлення...",
+    "logout": "Вийти",
+    "lastUpdated": "Останнє оновлення: {time} ({source})",
+    "dataSourceLive": "реальні дані",
+    "dataSourceMock": "тестові дані",
+    "loadErrorPrefix": "Не вдалося завантажити ринкові дані:",
+    "loading": "Завантаження ринкових даних...",
+    "empty": "За поточними фільтрами нічого не знайдено.",
+    "mobileBuy": "Купівля:",
+    "mobileSell": "Продаж:",
+    "mobileVolume": "Обʼєм:",
+    "mobileSpread": "Спред:",
+    "mobileBuyExchange": "Біржа куп.:",
+    "mobileSellExchange": "Біржа прод.:",
+    "mobileNetwork": "Мережа:",
+    "mobileLifetime": "Тривалість:",
+    "thBuyExchange": "Біржа купівлі",
+    "thSellExchange": "Біржа продажу",
+    "thNetwork": "Мережа",
+    "lifetimeZero": "0ms",
+    "lifetime": "{minutes}хв {seconds}с",
+    "autoRefresh": {
+      "off": "Не оновлювати",
+      "sec5": "Кожні 5 с",
+      "sec10": "Кожні 10 с",
+      "sec15": "Кожні 15 с",
+      "sec30": "Кожні 30 с"
+    },
+    "columns": {
+      "pair": "Валютна пара",
+      "buyRate": "Курс купівлі",
+      "sellRate": "Курс продажу",
+      "volume24hUsd": "Обʼєм",
+      "profitPercent": "Профіт",
+      "spreadPercent": "Спред",
+      "lifetimeMs": "Тривалість"
+    }
+  },
+  "NotFound": {
+    "message": "Сторінку не знайдено"
+  },
+  "Common": {
+    "unknownError": "Невідома помилка"
+  },
+  "ApiErrors": {
+    "UNAUTHORIZED": "Неавторизовано",
+    "FORBIDDEN": "Доступ заборонено",
+    "EMAIL_REQUIRED": "Потрібно вказати електронну пошту",
+    "EMAIL_INVALID": "Некоректний формат електронної пошти",
+    "SERVER_ERROR": "Непередбачена помилка сервера",
+    "MISSING_USER_ID": "Відсутній userId",
+    "APPROVAL_FORBIDDEN": "Доступ заборонено",
+    "HTTP_STATUS": "Помилка запиту: {status}",
+    "STATUS_CHECK": "Помилка перевірки статусу: {status}",
+    "LOGIN_STATUS": "Помилка входу: {status}"
+  }
+}

@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { API_ERROR_CODE } from "@/lib/api-error-codes";
+import { jsonError, jsonServerError } from "@/lib/api-error-response";
 import { AUTH_COOKIE_SESSION } from "@/server/auth/auth.constants";
 import { createSessionToken, createUserIdFromEmail } from "@/server/auth/auth.session";
 import { ensureAccessRequest } from "@/server/access/access.service";
@@ -15,18 +17,12 @@ export async function POST(request: Request) {
     const email = body.email?.trim().toLowerCase() ?? "";
 
     if (!email) {
-      return NextResponse.json(
-        { error: "Потрібно вказати електронну пошту" },
-        { status: 400 }
-      );
+      return jsonError(400, API_ERROR_CODE.EMAIL_REQUIRED);
     }
 
     const emailIsValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     if (!emailIsValid) {
-      return NextResponse.json(
-        { error: "Некоректний формат електронної пошти" },
-        { status: 400 }
-      );
+      return jsonError(400, API_ERROR_CODE.EMAIL_INVALID);
     }
 
     const userId = createUserIdFromEmail(email);
@@ -48,8 +44,6 @@ export async function POST(request: Request) {
 
     return response;
   } catch (caught) {
-    const message =
-      caught instanceof Error ? caught.message : "Непередбачена помилка сервера";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return jsonServerError(caught);
   }
 }

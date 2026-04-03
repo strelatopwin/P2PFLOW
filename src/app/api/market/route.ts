@@ -1,4 +1,6 @@
 import type { NextRequest } from "next/server";
+import { API_ERROR_CODE } from "@/lib/api-error-codes";
+import { responseJsonError, responseServerError } from "@/lib/api-error-response";
 import { parseMarketRequestQuery } from "@/server/market/market-query.utils";
 import { getMarketResponse } from "@/server/market/market.service";
 import { getAuthenticatedUserFromRequest } from "@/server/auth/auth.service";
@@ -8,20 +10,18 @@ export async function GET(request: NextRequest) {
   try {
     const user = await getAuthenticatedUserFromRequest(request);
     if (!user) {
-      return Response.json({ error: "Неавторизовано" }, { status: 401 });
+      return responseJsonError(401, API_ERROR_CODE.UNAUTHORIZED);
     }
 
     const approved = await hasApprovedAccess(user.id);
     if (!approved) {
-      return Response.json({ error: "Доступ заборонено" }, { status: 403 });
+      return responseJsonError(403, API_ERROR_CODE.FORBIDDEN);
     }
 
     const query = parseMarketRequestQuery(request.nextUrl.searchParams);
     const payload = await getMarketResponse(query);
     return Response.json(payload);
   } catch (caught) {
-    const message =
-      caught instanceof Error ? caught.message : "Непередбачена помилка сервера";
-    return Response.json({ error: message }, { status: 500 });
+    return responseServerError(caught);
   }
 }

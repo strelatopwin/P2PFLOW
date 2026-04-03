@@ -1,10 +1,16 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
+import { LocaleSwitcher } from "@/components/locale-switcher";
+import { apiErrorMessageFromPayload } from "@/lib/api-client-messages";
 
 export default function LoginPage() {
   const router = useRouter();
+  const t = useTranslations("Login");
+  const tApi = useTranslations("ApiErrors");
+  const tCommon = useTranslations("Common");
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -23,15 +29,20 @@ export default function LoginPage() {
         body: JSON.stringify({ email }),
       });
 
+      const payload = (await response.json()) as {
+        errorCode?: string;
+        error?: string;
+      };
+
       if (!response.ok) {
-        const payload = (await response.json()) as { error?: string };
-        throw new Error(payload.error ?? `Помилка входу: ${response.status}`);
+        throw new Error(apiErrorMessageFromPayload(payload, tApi, tApi.has));
       }
 
       router.push("/waiting-access");
       router.refresh();
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message : "Невідома помилка";
+      const message =
+        caught instanceof Error ? caught.message : tCommon("unknownError");
       setError(message);
     } finally {
       setIsLoading(false);
@@ -39,16 +50,17 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
+    <main className="relative min-h-screen flex items-center justify-center p-6">
+      <div className="absolute right-4 top-4 md:right-6 md:top-6">
+        <LocaleSwitcher />
+      </div>
       <section className="w-full max-w-md rounded-xl bg-white p-6 shadow-sm">
-        <h1 className="mb-2 text-2xl font-semibold text-zinc-900">Вхід</h1>
-        <p className="mb-5 text-sm text-zinc-600">
-          Введіть email, щоб надіслати запит доступу до арбітражної таблиці.
-        </p>
+        <h1 className="mb-2 text-2xl font-semibold text-zinc-900">{t("title")}</h1>
+        <p className="mb-5 text-sm text-zinc-600">{t("description")}</p>
 
         <form className="space-y-3" onSubmit={onSubmit}>
           <label className="block">
-            <span className="mb-1 block text-sm text-zinc-700">Електронна пошта</span>
+            <span className="mb-1 block text-sm text-zinc-700">{t("emailLabel")}</span>
             <input
               type="email"
               value={email}
@@ -69,7 +81,7 @@ export default function LoginPage() {
             disabled={isLoading}
             className="w-full rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60"
           >
-            {isLoading ? "Надсилання запиту..." : "Запросити доступ"}
+            {isLoading ? t("submitLoading") : t("submit")}
           </button>
         </form>
       </section>
