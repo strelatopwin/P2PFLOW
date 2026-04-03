@@ -10,9 +10,13 @@ const BASE_ROWS: MarketRow[] = [
     sellRate: 0.9871,
     volume24hUsd: 1250000,
     profitPercent: 0.25,
+    profitDisplay: "0.25% ($1.10, ETHEREUM)",
     spreadPercent: 0.43,
     lifetimeMs: 339000,
-    network: "Ethereum",
+    network: "ETHEREUM",
+    withdrawalNetworkEntries: [
+      { text: "ETHEREUM ( $2.50, ~15хв. )", expectedProfitIndex: 0.25 },
+    ],
   },
   {
     id: "aevo-usdt",
@@ -23,9 +27,13 @@ const BASE_ROWS: MarketRow[] = [
     sellRate: 0.4469,
     volume24hUsd: 4239560,
     profitPercent: -1.2,
+    profitDisplay: "-1.20% (-$2.15, ETHEREUM)",
     spreadPercent: -0.08,
     lifetimeMs: 31892,
-    network: "Ethereum",
+    network: "ETHEREUM",
+    withdrawalNetworkEntries: [
+      { text: "ETHEREUM ( $1.20, 5хв. ~ 20хв. )", expectedProfitIndex: -1.2 },
+    ],
   },
   {
     id: "aidoge-usdt",
@@ -36,9 +44,13 @@ const BASE_ROWS: MarketRow[] = [
     sellRate: 0.0000002112,
     volume24hUsd: 5960000,
     profitPercent: -0.19,
+    profitDisplay: "-0.19% (-$0.42, ARBITRUM)",
     spreadPercent: -0.03,
     lifetimeMs: 1917000,
-    network: "Arbitrum",
+    network: "ARBITRUM",
+    withdrawalNetworkEntries: [
+      { text: "ARBITRUM ( $0.8050, ~10хв. )", expectedProfitIndex: -0.19 },
+    ],
   },
   {
     id: "ai-usdt",
@@ -49,9 +61,13 @@ const BASE_ROWS: MarketRow[] = [
     sellRate: 0.4594,
     volume24hUsd: 3272530,
     profitPercent: -0.72,
+    profitDisplay: "-0.72% (-$0.55, BNB)",
     spreadPercent: 0.13,
     lifetimeMs: 0,
-    network: "BNB Chain",
+    network: "BNB",
+    withdrawalNetworkEntries: [
+      { text: "BNB ( $0.30, 3хв. ~ 10хв. )", expectedProfitIndex: -0.72 },
+    ],
   },
   {
     id: "aixbt-usdt-binance",
@@ -62,9 +78,13 @@ const BASE_ROWS: MarketRow[] = [
     sellRate: 0.2249,
     volume24hUsd: 77593.26,
     profitPercent: 0.31,
+    profitDisplay: "0.31% ($0.366, BASE)",
     spreadPercent: 0.12,
     lifetimeMs: 367000,
-    network: "Base",
+    network: "BASE",
+    withdrawalNetworkEntries: [
+      { text: "BASE ( $0.0487, ~10хв. )", expectedProfitIndex: 0.31 },
+    ],
   },
   {
     id: "aixbt-usdt-kucoin",
@@ -75,9 +95,13 @@ const BASE_ROWS: MarketRow[] = [
     sellRate: 0.2242,
     volume24hUsd: 72425.31,
     profitPercent: 0.22,
+    profitDisplay: "0.22% ($0.29, BASE)",
     spreadPercent: 0.18,
     lifetimeMs: 361000,
-    network: "Base",
+    network: "BASE",
+    withdrawalNetworkEntries: [
+      { text: "BASE ( $0.05, ~10хв. )", expectedProfitIndex: 0.22 },
+    ],
   },
   {
     id: "sol-usdt",
@@ -88,9 +112,13 @@ const BASE_ROWS: MarketRow[] = [
     sellRate: 183.93,
     volume24hUsd: 24900340,
     profitPercent: 0.38,
+    profitDisplay: "0.38% ($0.88, SOLANA)",
     spreadPercent: 0.38,
     lifetimeMs: 93200,
-    network: "Solana",
+    network: "SOLANA",
+    withdrawalNetworkEntries: [
+      { text: "SOLANA ( $0.15, ~5хв. )", expectedProfitIndex: 0.38 },
+    ],
   },
   {
     id: "eth-usdt",
@@ -101,9 +129,26 @@ const BASE_ROWS: MarketRow[] = [
     sellRate: 3530.31,
     volume24hUsd: 52700000,
     profitPercent: 0.26,
+    profitDisplay: "0.26% ($1.28, ETHEREUM)",
     spreadPercent: 0.26,
     lifetimeMs: 124000,
-    network: "Ethereum",
+    network: "ETHEREUM",
+    withdrawalNetworkEntries: [
+      {
+        text: "ARBITRUM ( $0.196, ~5хв. )",
+        expectedProfitIndex: -0.4,
+      },
+      {
+        text: "POLYGON ( $0.984, ~20хв. )",
+        expectedProfitIndex: -0.2,
+      },
+      { text: "BNB ( $0.689, ~5хв. )", expectedProfitIndex: 0.15 },
+      { text: "AXELAR ( $0.984 )", expectedProfitIndex: 0.1 },
+      {
+        text: "ETHEREUM ( $1.60, 5хв. ~ 15хв. )",
+        expectedProfitIndex: 0.26,
+      },
+    ],
   },
 ];
 
@@ -135,7 +180,11 @@ export function applyQueryToMarketRows(
           item.pair.toLowerCase().includes(normalizedSearch) ||
           item.buyExchange.toLowerCase().includes(normalizedSearch) ||
           item.sellExchange.toLowerCase().includes(normalizedSearch) ||
-          item.network.toLowerCase().includes(normalizedSearch)
+          item.network.toLowerCase().includes(normalizedSearch) ||
+          item.withdrawalNetworkEntries.some((entry) =>
+            entry.text.toLowerCase().includes(normalizedSearch),
+          ) ||
+          item.profitDisplay.toLowerCase().includes(normalizedSearch)
         );
       })
     : [...rows];

@@ -4,6 +4,12 @@ export type ProfitArbitrageLoginResponse = {
 
 export type ProfitArbitrageRawChain = {
   chain?: string;
+  withdrawEnabled?: boolean;
+  withdrawFeeUsd?: number;
+  minTransferTimeMinutes?: number;
+  maxTransferTimeMinutes?: number;
+  expectedProfitIndex?: number;
+  expectedProfitUsd?: number;
 };
 
 export type ProfitArbitrageRawWebDataRow = {
@@ -17,6 +23,8 @@ export type ProfitArbitrageRawWebDataRow = {
   volumeUsd?: number;
   volume?: number;
   profitIndexAvg?: number;
+  exitProfitIndex?: number;
+  expectedProfitUsd?: number;
   lifetime?: number;
   chainsBuy?: ProfitArbitrageRawChain[];
   chainsSell?: ProfitArbitrageRawChain[];

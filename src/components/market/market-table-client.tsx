@@ -59,6 +59,34 @@ function formatPercent(value: number): string {
   return `${prefix}${value.toFixed(2)}%`;
 }
 
+function WithdrawalNetworksCell({
+  entries,
+}: {
+  entries: MarketRow["withdrawalNetworkEntries"];
+}) {
+  if (entries.length === 0) {
+    return <span className="text-zinc-700">UNKNOWN</span>;
+  }
+  return (
+    <>
+      {entries.map((entry, index) => (
+        <span key={index}>
+          {index > 0 ? ", " : null}
+          <span
+            className={
+              entry.expectedProfitIndex >= 0
+                ? "text-emerald-600"
+                : "text-rose-600"
+            }
+          >
+            {entry.text}
+          </span>
+        </span>
+      ))}
+    </>
+  );
+}
+
 export function MarketTableClient() {
   const router = useRouter();
   const locale = useLocale();
@@ -329,7 +357,7 @@ export function MarketTableClient() {
                           : "text-rose-600"
                       }`}
                     >
-                      {formatPercent(row.profitPercent)}
+                      {row.profitDisplay}
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-zinc-600">
@@ -352,8 +380,11 @@ export function MarketTableClient() {
                     <span>
                       {t("mobileSellExchange")} {row.sellExchange}
                     </span>
-                    <span>
-                      {t("mobileNetwork")} {row.network}
+                    <span className="col-span-2 text-zinc-600">
+                      {t("mobileNetwork")}{" "}
+                      <WithdrawalNetworksCell
+                        entries={row.withdrawalNetworkEntries}
+                      />
                     </span>
                     <span>
                       {t("mobileLifetime")} {formatLifetime(row.lifetimeMs)}
@@ -364,7 +395,7 @@ export function MarketTableClient() {
             </div>
 
             <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[980px] border-separate border-spacing-0">
+              <table className="w-full min-w-[1080px] border-separate border-spacing-0">
                 <thead>
                   <tr>
                     {sortableColumns.map((column) => {
@@ -428,7 +459,7 @@ export function MarketTableClient() {
                             : "text-rose-600"
                         }`}
                       >
-                        {formatPercent(row.profitPercent)}
+                        {row.profitDisplay}
                       </td>
                       <td
                         className={`border-b border-zinc-100 px-3 py-3 text-sm ${
@@ -448,8 +479,10 @@ export function MarketTableClient() {
                       <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
                         {row.sellExchange}
                       </td>
-                      <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
-                        {row.network}
+                      <td className="border-b border-zinc-100 px-3 py-3 text-sm">
+                        <WithdrawalNetworksCell
+                          entries={row.withdrawalNetworkEntries}
+                        />
                       </td>
                     </tr>
                   ))}
