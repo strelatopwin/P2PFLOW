@@ -17,7 +17,7 @@ export default async function Home({ params }: Props) {
     return redirect({ href: "/login", locale });
   }
 
-  const access = await getAccessState(user.id, user.email);
+  const access = await getAccessState(user.id, user.email, user.deviceId);
   if (!access.approved) {
     return redirect({ href: "/waiting-access", locale });
   }

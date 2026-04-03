@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
       return jsonError(401, API_ERROR_CODE.UNAUTHORIZED);
     }
 
-    const state = await getAccessState(user.id, user.email);
+    const state = await getAccessState(user.id, user.email, user.deviceId);
     return NextResponse.json(state);
   } catch (caught) {
     return jsonServerError(caught);

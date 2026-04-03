@@ -4,8 +4,16 @@ import type { AuthenticatedUser } from "@/server/auth/auth.service";
 type SessionPayload = {
   userId: string;
   email: string;
+  deviceId: string;
   exp: number;
 };
+
+const UUID_V4_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export function isValidDeviceId(value: string): boolean {
+  return UUID_V4_RE.test(value);
+}
 
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
 
@@ -35,11 +43,12 @@ export function createUserIdFromEmail(email: string): string {
   return `email_${hash.slice(0, 24)}`;
 }
 
-export function createSessionToken(email: string): string {
+export function createSessionToken(email: string, deviceId: string): string {
   const normalizedEmail = email.trim().toLowerCase();
   const payload: SessionPayload = {
     userId: createUserIdFromEmail(normalizedEmail),
     email: normalizedEmail,
+    deviceId,
     exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS,
   };
 
@@ -71,7 +80,10 @@ export function parseSessionToken(token: string | undefined): AuthenticatedUser 
 
   try {
     const parsed = JSON.parse(fromBase64Url(encodedPayload)) as SessionPayload;
-    if (!parsed.userId || !parsed.email || !parsed.exp) {
+    if (!parsed.userId || !parsed.email || !parsed.exp || !parsed.deviceId) {
+      return null;
+    }
+    if (!isValidDeviceId(parsed.deviceId)) {
       return null;
     }
     if (parsed.exp < Math.floor(Date.now() / 1000)) {
@@ -80,6 +92,7 @@ export function parseSessionToken(token: string | undefined): AuthenticatedUser 
     return {
       id: parsed.userId,
       email: parsed.email,
+      deviceId: parsed.deviceId,
     };
   } catch {
     return null;

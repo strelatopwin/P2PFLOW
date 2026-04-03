@@ -6,6 +6,7 @@ import { parseSessionToken } from "@/server/auth/auth.session";
 export type AuthenticatedUser = {
   id: string;
   email: string;
+  deviceId: string;
 };
 
 export async function getAuthenticatedUserFromRequest(
