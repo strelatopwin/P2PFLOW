@@ -4,8 +4,13 @@ import type {
   ProfitArbitrageRawWebDataRow,
 } from "@/server/profit-arbitrage-client/profit-arbitrage-client.types";
 import {
+  PROFIT_ARBITRAGE_DEFAULT_BLACKLISTED_CURRENCIES,
+  PROFIT_ARBITRAGE_DEFAULT_BUY_NETWORKS_STATUS,
   PROFIT_ARBITRAGE_DEFAULT_EXCHANGES,
   PROFIT_ARBITRAGE_DEFAULT_FID,
+  PROFIT_ARBITRAGE_DEFAULT_NETWORKS_COMPATIBILITY,
+  PROFIT_ARBITRAGE_DEFAULT_SELL_EXCHANGES,
+  PROFIT_ARBITRAGE_DEFAULT_SELL_NETWORKS_STATUS,
   PROFIT_ARBITRAGE_LOGIN_URL,
   PROFIT_ARBITRAGE_MIN_REQUEST_INTERVAL_MS_DEFAULT,
   PROFIT_ARBITRAGE_TOKEN_TTL_FALLBACK_MS,
@@ -14,19 +19,15 @@ import {
 import { decodeJwtExp } from "@/server/profit-arbitrage-client/profit-arbitrage-client.utils";
 
 let cachedAuth: ProfitArbitrageAuthCache = null;
-let webDataCache:
-  | {
-      key: string;
-      expiresAtMs: number;
-      payload: ProfitArbitrageRawWebDataRow[];
-    }
-  | null = null;
-let webDataInFlight:
-  | {
-      key: string;
-      promise: Promise<ProfitArbitrageRawWebDataRow[]>;
-    }
-  | null = null;
+let webDataCache: {
+  key: string;
+  expiresAtMs: number;
+  payload: ProfitArbitrageRawWebDataRow[];
+} | null = null;
+let webDataInFlight: {
+  key: string;
+  promise: Promise<ProfitArbitrageRawWebDataRow[]>;
+} | null = null;
 
 function getMinRequestIntervalMs(): number {
   const fromEnv = Number(process.env.PROFIT_ARBITRAGE_MIN_REQUEST_INTERVAL_MS);
@@ -83,12 +84,31 @@ function makeWebDataParams(limit: number): URLSearchParams {
     PROFIT_ARBITRAGE_DEFAULT_EXCHANGES;
   const sellExchanges =
     process.env.PROFIT_ARBITRAGE_SELL_EXCHANGES ??
-    PROFIT_ARBITRAGE_DEFAULT_EXCHANGES;
+    PROFIT_ARBITRAGE_DEFAULT_SELL_EXCHANGES;
   const fid = process.env.PROFIT_ARBITRAGE_FID ?? PROFIT_ARBITRAGE_DEFAULT_FID;
+  const whitelistedCurrencies =
+    process.env.PROFIT_ARBITRAGE_WHITELISTED_CURRENCIES ?? "";
+  const blacklistedCurrencies =
+    process.env.PROFIT_ARBITRAGE_BLACKLISTED_CURRENCIES ??
+    PROFIT_ARBITRAGE_DEFAULT_BLACKLISTED_CURRENCIES;
+  const networksCompatibility =
+    process.env.PROFIT_ARBITRAGE_NETWORKS_COMPATIBILITY ??
+    PROFIT_ARBITRAGE_DEFAULT_NETWORKS_COMPATIBILITY;
+  const buyNetworksStatus =
+    process.env.PROFIT_ARBITRAGE_BUY_NETWORKS_STATUS ??
+    PROFIT_ARBITRAGE_DEFAULT_BUY_NETWORKS_STATUS;
+  const sellNetworksStatus =
+    process.env.PROFIT_ARBITRAGE_SELL_NETWORKS_STATUS ??
+    PROFIT_ARBITRAGE_DEFAULT_SELL_NETWORKS_STATUS;
 
   return new URLSearchParams({
     buy_exchanges: buyExchanges,
     sell_exchanges: sellExchanges,
+    whitelisted_currencies: whitelistedCurrencies,
+    blacklisted_currencies: blacklistedCurrencies,
+    networks_compatibility: networksCompatibility,
+    buy_networks_status: buyNetworksStatus,
+    sell_networks_status: sellNetworksStatus,
     fid,
     lang: "en",
     limit: String(limit),
@@ -103,7 +123,11 @@ export async function fetchProfitArbitrageWebData(
   const cacheKey = params.toString();
   const now = Date.now();
 
-  if (webDataCache && webDataCache.key === cacheKey && webDataCache.expiresAtMs > now) {
+  if (
+    webDataCache &&
+    webDataCache.key === cacheKey &&
+    webDataCache.expiresAtMs > now
+  ) {
     return webDataCache.payload;
   }
 

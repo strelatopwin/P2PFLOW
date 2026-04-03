@@ -50,7 +50,9 @@ function formatWithdrawalFeeUsd(feeUsd: unknown): string | null {
   }
   const decimals = Math.abs(n) >= 1 ? 2 : 4;
   const fixed = n.toFixed(decimals);
-  const trimmed = fixed.replace(/(\.\d*?[1-9])0+$/u, "$1").replace(/\.0+$/u, "");
+  const trimmed = fixed
+    .replace(/(\.\d*?[1-9])0+$/u, "$1")
+    .replace(/\.0+$/u, "");
   return `$${trimmed}`;
 }
 
@@ -77,7 +79,9 @@ function formatTransferTimeMinutes(
   return `~${max}хв.`;
 }
 
-function formatWithdrawalChainEntry(item: ProfitArbitrageRawChain): string | null {
+function formatWithdrawalChainEntry(
+  item: ProfitArbitrageRawChain,
+): string | null {
   const name = (item.chain ?? "").trim().toUpperCase();
   if (!name) {
     return null;
@@ -169,8 +173,14 @@ function buildWithdrawalNetworkEntries(
 }
 
 function normalizePair(row: ProfitArbitrageRawWebDataRow): string {
+  if (row.exchangeBuySymbol) {
+    return row.exchangeBuySymbol;
+  }
   if (row.originalSymbol) {
     return row.originalSymbol.split("|")[0] ?? row.originalSymbol;
+  }
+  if (row.exchangeSellSymbol) {
+    return row.exchangeSellSymbol;
   }
   return row.uniSymbol ?? row.symbol ?? "UNKNOWN-USDT";
 }
