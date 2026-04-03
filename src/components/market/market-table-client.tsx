@@ -73,6 +73,34 @@ function formatDataSource(source: "live" | "mock"): string {
   return source === "live" ? "реальні дані" : "тестові дані";
 }
 
+function WithdrawalNetworksCell({
+  entries,
+}: {
+  entries: MarketRow["withdrawalNetworkEntries"];
+}) {
+  if (entries.length === 0) {
+    return <span className="text-zinc-700">UNKNOWN</span>;
+  }
+  return (
+    <>
+      {entries.map((entry, index) => (
+        <span key={index}>
+          {index > 0 ? ", " : null}
+          <span
+            className={
+              entry.expectedProfitIndex >= 0
+                ? "text-emerald-600"
+                : "text-rose-600"
+            }
+          >
+            {entry.text}
+          </span>
+        </span>
+      ))}
+    </>
+  );
+}
+
 export function MarketTableClient() {
   const router = useRouter();
   const [rows, setRows] = useState<MarketRow[]>([]);
@@ -240,7 +268,9 @@ export function MarketTableClient() {
         ) : null}
 
         {!error && isLoading ? (
-          <div className="py-8 text-sm text-zinc-500">Завантаження ринкових даних...</div>
+          <div className="py-8 text-sm text-zinc-500">
+            Завантаження ринкових даних...
+          </div>
         ) : null}
 
         {!error && !isLoading ? (
@@ -257,13 +287,17 @@ export function MarketTableClient() {
                   className="rounded-lg border border-zinc-100 p-3"
                 >
                   <div className="mb-2 flex items-center justify-between">
-                    <p className="text-sm font-semibold text-zinc-900">{row.pair}</p>
+                    <p className="text-sm font-semibold text-zinc-900">
+                      {row.pair}
+                    </p>
                     <p
                       className={`text-xs font-medium ${
-                        row.profitPercent >= 0 ? "text-emerald-600" : "text-rose-600"
+                        row.profitPercent >= 0
+                          ? "text-emerald-600"
+                          : "text-rose-600"
                       }`}
                     >
-                      {formatPercent(row.profitPercent)}
+                      {row.profitDisplay}
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-zinc-600">
@@ -273,7 +307,12 @@ export function MarketTableClient() {
                     <span>Спред: {formatPercent(row.spreadPercent)}</span>
                     <span>Біржа куп.: {row.buyExchange}</span>
                     <span>Біржа прод.: {row.sellExchange}</span>
-                    <span>Мережа: {row.network}</span>
+                    <span className="col-span-2 text-zinc-600">
+                      Мережа виводу:
+                      <WithdrawalNetworksCell
+                        entries={row.withdrawalNetworkEntries}
+                      />
+                    </span>
                     <span>Тривалість: {formatLifetime(row.lifetimeMs)}</span>
                   </div>
                 </article>
@@ -281,93 +320,99 @@ export function MarketTableClient() {
             </div>
 
             <div className="hidden overflow-x-auto md:block">
-            <table className="w-full min-w-[980px] border-separate border-spacing-0">
-              <thead>
-                <tr>
-                  {SORTABLE_COLUMNS.map((column) => {
-                    const isActive = sortBy === column.key;
-                    return (
-                      <th
-                        key={column.key}
-                        className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-600"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => toggleSort(column.key)}
-                          className="inline-flex items-center gap-1"
-                        >
-                          {column.label}
-                          {isActive ? (sortOrder === "asc" ? "▲" : "▼") : ""}
-                        </button>
-                      </th>
-                    );
-                  })}
-                  <th className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-600">
-                    Біржа купівлі
-                  </th>
-                  <th className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-600">
-                    Біржа продажу
-                  </th>
-                  <th className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-600">
-                    Мережа
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.length === 0 ? (
+              <table className="w-full min-w-[1080px] border-separate border-spacing-0">
+                <thead>
                   <tr>
-                    <td
-                      colSpan={10}
-                      className="px-3 py-8 text-center text-sm text-zinc-500"
-                    >
-                      За поточними фільтрами нічого не знайдено.
-                    </td>
+                    {SORTABLE_COLUMNS.map((column) => {
+                      const isActive = sortBy === column.key;
+                      return (
+                        <th
+                          key={column.key}
+                          className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-600"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => toggleSort(column.key)}
+                            className="inline-flex items-center gap-1"
+                          >
+                            {column.label}
+                            {isActive ? (sortOrder === "asc" ? "▲" : "▼") : ""}
+                          </button>
+                        </th>
+                      );
+                    })}
+                    <th className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-600">
+                      Біржа купівлі
+                    </th>
+                    <th className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-600">
+                      Біржа продажу
+                    </th>
+                    <th className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-600">
+                      Мережа виводу
+                    </th>
                   </tr>
-                ) : null}
-                {rows.map((row) => (
-                  <tr key={row.id}>
-                    <td className="border-b border-zinc-100 px-3 py-3 text-sm font-medium text-zinc-900">
-                      {row.pair}
-                    </td>
-                    <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
-                      {formatRate(row.buyRate)}
-                    </td>
-                    <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
-                      {formatRate(row.sellRate)}
-                    </td>
-                    <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
-                      {formatUsd(row.volume24hUsd)}
-                    </td>
-                    <td
-                      className={`border-b border-zinc-100 px-3 py-3 text-sm ${
-                        row.profitPercent >= 0 ? "text-emerald-600" : "text-rose-600"
-                      }`}
-                    >
-                      {formatPercent(row.profitPercent)}
-                    </td>
-                    <td
-                      className={`border-b border-zinc-100 px-3 py-3 text-sm ${
-                        row.spreadPercent >= 0 ? "text-emerald-600" : "text-rose-600"
-                      }`}
-                    >
-                      {formatPercent(row.spreadPercent)}
-                    </td>
-                    <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
-                      {formatLifetime(row.lifetimeMs)}
-                    </td>
-                    <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
-                      {row.buyExchange}
-                    </td>
-                    <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
-                      {row.sellExchange}
-                    </td>
-                    <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
-                      {row.network}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {rows.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={10}
+                        className="px-3 py-8 text-center text-sm text-zinc-500"
+                      >
+                        За поточними фільтрами нічого не знайдено.
+                      </td>
+                    </tr>
+                  ) : null}
+                  {rows.map((row) => (
+                    <tr key={row.id}>
+                      <td className="border-b border-zinc-100 px-3 py-3 text-sm font-medium text-zinc-900">
+                        {row.pair}
+                      </td>
+                      <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
+                        {formatRate(row.buyRate)}
+                      </td>
+                      <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
+                        {formatRate(row.sellRate)}
+                      </td>
+                      <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
+                        {formatUsd(row.volume24hUsd)}
+                      </td>
+                      <td
+                        className={`border-b border-zinc-100 px-3 py-3 text-sm ${
+                          row.profitPercent >= 0
+                            ? "text-emerald-600"
+                            : "text-rose-600"
+                        }`}
+                      >
+                        {row.profitDisplay}
+                      </td>
+                      <td
+                        className={`border-b border-zinc-100 px-3 py-3 text-sm ${
+                          row.spreadPercent >= 0
+                            ? "text-emerald-600"
+                            : "text-rose-600"
+                        }`}
+                      >
+                        {formatPercent(row.spreadPercent)}
+                      </td>
+                      <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
+                        {formatLifetime(row.lifetimeMs)}
+                      </td>
+                      <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
+                        {row.buyExchange}
+                      </td>
+                      <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
+                        {row.sellExchange}
+                      </td>
+                      <td className="border-b border-zinc-100 px-3 py-3 text-sm">
+                        <WithdrawalNetworksCell
+                          entries={row.withdrawalNetworkEntries}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </>
         ) : null}
