@@ -55,12 +55,16 @@ export default function LoginPage() {
         <LocaleSwitcher />
       </div>
       <section className="w-full max-w-md rounded-xl bg-white p-6 shadow-sm">
-        <h1 className="mb-2 text-2xl font-semibold text-zinc-900">{t("title")}</h1>
+        <h1 className="mb-2 text-2xl font-semibold text-zinc-900">
+          {t("title")}
+        </h1>
         <p className="mb-5 text-sm text-zinc-600">{t("description")}</p>
 
         <form className="space-y-3" onSubmit={onSubmit}>
           <label className="block">
-            <span className="mb-1 block text-sm text-zinc-700">{t("emailLabel")}</span>
+            <span className="mb-1 block text-sm text-zinc-700">
+              {t("emailLabel")}
+            </span>
             <input
               type="email"
               value={email}

@@ -3,11 +3,13 @@ import type { NextRequest } from "next/server";
 import { API_ERROR_CODE } from "@/lib/api-error-codes";
 import { jsonError } from "@/lib/api-error-response";
 import { approveAccess, rejectAccess } from "@/server/access/access.service";
+import { isValidDeviceId } from "@/server/auth/auth.session";
 
 type AccessApprovalStatus = "approved" | "rejected";
 
 type ApprovalCommand = {
   userId: string | null;
+  deviceId: string | null;
   secret: string | null;
   action: string | null;
 };
@@ -65,14 +67,19 @@ function createHtmlRedirectResponse(status: AccessApprovalStatus): Response {
 
 async function executeApprovalAction(
   userId: string,
+  deviceId: string | null,
   action: string | null
-): Promise<AccessApprovalStatus> {
+): Promise<AccessApprovalStatus | null> {
   if (action === "reject") {
     await rejectAccess(userId);
     return "rejected";
   }
 
-  await approveAccess(userId);
+  if (!deviceId || !isValidDeviceId(deviceId)) {
+    return null;
+  }
+
+  await approveAccess(userId, deviceId);
   return "approved";
 }
 
@@ -91,6 +98,7 @@ export async function handleAccessApprovalRequest(
 ): Promise<Response> {
   const command: ApprovalCommand = {
     userId: request.nextUrl.searchParams.get("userId"),
+    deviceId: request.nextUrl.searchParams.get("deviceId"),
     secret: request.nextUrl.searchParams.get("secret"),
     action: request.nextUrl.searchParams.get("action"),
   };
@@ -103,6 +111,13 @@ export async function handleAccessApprovalRequest(
     return jsonError(400, API_ERROR_CODE.MISSING_USER_ID);
   }
 
-  const status = await executeApprovalAction(command.userId, command.action);
+  const status = await executeApprovalAction(
+    command.userId,
+    command.deviceId,
+    command.action
+  );
+  if (status === null) {
+    return jsonError(400, API_ERROR_CODE.MISSING_DEVICE_ID);
+  }
   return buildApprovalResponse(request, status);
 }

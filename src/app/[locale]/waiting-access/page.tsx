@@ -16,7 +16,8 @@ export default function WaitingAccessPage() {
   const t = useTranslations("WaitingAccess");
   const tApi = useTranslations("ApiErrors");
   const tCommon = useTranslations("Common");
-  const [status, setStatus] = useState<AccessStatusResponse["status"]>("pending");
+  const [status, setStatus] =
+    useState<AccessStatusResponse["status"]>("pending");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -88,7 +89,9 @@ export default function WaitingAccessPage() {
         <LocaleSwitcher />
       </div>
       <section className="w-full max-w-lg rounded-xl bg-white p-6 shadow-sm">
-        <h1 className="mb-2 text-2xl font-semibold text-zinc-900">{t("title")}</h1>
+        <h1 className="mb-2 text-2xl font-semibold text-zinc-900">
+          {t("title")}
+        </h1>
         <p className="mb-4 text-sm text-zinc-600">{t("description")}</p>
 
         <div className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700">

@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
       return responseJsonError(401, API_ERROR_CODE.UNAUTHORIZED);
     }
 
-    const approved = await hasApprovedAccess(user.id);
+    const approved = await hasApprovedAccess(user.id, user.email, user.deviceId);
     if (!approved) {
       return responseJsonError(403, API_ERROR_CODE.FORBIDDEN);
     }

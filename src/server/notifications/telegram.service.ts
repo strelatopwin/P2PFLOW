@@ -1,9 +1,10 @@
 type TelegramLoginRequest = {
   email: string;
   userId: string;
+  deviceId: string;
 };
 
-function buildApproveLink(userId: string): string {
+function buildApproveLink(userId: string, deviceId: string): string {
   const baseUrl = process.env.APP_BASE_URL;
   const secret = process.env.ACCESS_APPROVAL_SECRET;
 
@@ -11,7 +12,7 @@ function buildApproveLink(userId: string): string {
     return "";
   }
 
-  const params = new URLSearchParams({ userId, secret });
+  const params = new URLSearchParams({ userId, deviceId, secret });
   return `${baseUrl.replace(/\/$/, "")}/api/access/approve?${params.toString()}`;
 }
 
@@ -24,11 +25,12 @@ export async function sendTelegramLoginRequestNotification(
     return;
   }
 
-  const approveLink = buildApproveLink(payload.userId);
+  const approveLink = buildApproveLink(payload.userId, payload.deviceId);
   const lines = [
     "Новий запит на доступ",
     `Email: ${payload.email}`,
     `ID користувача: ${payload.userId}`,
+    `Пристрій: ${payload.deviceId}`,
     approveLink ? `Схвалити: ${approveLink}` : "",
   ].filter(Boolean);
 

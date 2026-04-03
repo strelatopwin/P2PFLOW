@@ -5,6 +5,8 @@ export const accessRequestsTable = pgTable("access_requests", {
   userId: text("user_id").notNull(),
   email: text("email").notNull(),
   approved: boolean("approved").notNull().default(false),
+  /** When set, only this device_id (from signed session) may use approved access. */
+  approvedDeviceId: uuid("approved_device_id"),
   notifiedAt: timestamp("notified_at", { withTimezone: true }),
   approvedAt: timestamp("approved_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
