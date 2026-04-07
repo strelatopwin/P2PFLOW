@@ -7,12 +7,10 @@ import type { Locale } from "next-intl";
 
 const LOCALES = routing.locales;
 
-/** Shared with toolbar selects (auto-refresh, etc.). */
 export const toolbarSelectClassName =
-  "rounded-md border border-zinc-200 bg-white px-2 py-2 text-xs text-zinc-700 outline-none ring-0 focus:border-zinc-400 md:text-sm";
+  "h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-800 shadow-sm outline-none ring-0 transition-colors focus:border-zinc-400 focus:outline-none";
 
 type LocaleSwitcherProps = {
-  /** Extra classes (e.g. `col-span-3 md:col-span-1` in a grid). */
   className?: string;
 };
 
