@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import {
@@ -9,6 +9,16 @@ import {
 } from "@/components/locale-switcher";
 import { apiErrorMessageFromPayload } from "@/lib/api-client-messages";
 import type { MarketRow, SortBy, SortOrder } from "@/types/market";
+import { MarketColumnSettingsPopover } from "@/components/drag-and-drop/column-settings-popover";
+import {
+  defaultMarketColumnHidden,
+  defaultMarketColumnOrder,
+  isMarketSortColumn,
+  type MarketColumnKey,
+  marketColumnMessageKey,
+  MANDATORY_MARKET_COLUMNS,
+} from "@/lib/market-table-columns";
+import { ChevronDown, ChevronUp, Settings } from "lucide-react";
 
 type ApiResponse = {
   rows: MarketRow[];
@@ -24,27 +34,23 @@ type ApiResponse = {
   };
 };
 
-const SORT_KEYS: SortBy[] = [
-  "pair",
-  "buyRate",
-  "sellRate",
-  "volume24hUsd",
-  "profitPercent",
-  "spreadPercent",
-  "lifetimeMs",
-];
-
 const AUTO_REFRESH_VALUES = [0, 5, 10, 15, 30] as const;
 
-function formatUsd(value: number, locale: string): string {
+const toolbarButtonClass =
+  "inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-zinc-200 px-3 text-sm font-medium text-zinc-800 shadow-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-400";
+
+const tableHeaderCell =
+  "border-b border-zinc-200 bg-zinc-50 px-3 py-3.5 text-center text-[13px] font-semibold leading-tight text-zinc-600 break-words";
+
+const tableBodyCell =
+  "border-b border-zinc-100 px-3 py-3.5 text-center align-middle text-sm leading-snug text-zinc-800 break-words";
+
+function formatVolumeUsd(value: number, locale: string): string {
   if (value >= 1_000_000) {
-    return `$${(value / 1_000_000).toFixed(2)}M`;
+    const m = value / 1_000_000;
+    return `${m.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}M USD`;
   }
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(value);
+  return `${value.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
 }
 
 function formatRate(value: number): string {
@@ -65,7 +71,7 @@ function WithdrawalNetworksCell({
   entries: MarketRow["withdrawalNetworkEntries"];
 }) {
   if (entries.length === 0) {
-    return <span className="text-zinc-700">UNKNOWN</span>;
+    return <span className="text-zinc-500">UNKNOWN</span>;
   }
   return (
     <>
@@ -75,8 +81,8 @@ function WithdrawalNetworksCell({
           <span
             className={
               entry.expectedProfitIndex >= 0
-                ? "text-emerald-600"
-                : "text-rose-600"
+                ? "font-medium text-green-600"
+                : "font-medium text-red-600"
             }
           >
             {entry.text}
@@ -105,14 +111,22 @@ export function MarketTableClient() {
   const [error, setError] = useState<string>("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [autoRefreshSeconds, setAutoRefreshSeconds] = useState<number>(0);
+  const [columnSettingsOpen, setColumnSettingsOpen] = useState(false);
+  const [columnOrder, setColumnOrder] = useState<MarketColumnKey[]>(
+    defaultMarketColumnOrder,
+  );
+  const [columnHidden, setColumnHidden] = useState<
+    Record<MarketColumnKey, boolean>
+  >(defaultMarketColumnHidden);
 
-  const sortableColumns = useMemo(
+  const columnSettingsRef = useRef<HTMLDivElement>(null);
+
+  const visibleOrderedColumns = useMemo(
     () =>
-      SORT_KEYS.map((key) => ({
-        key,
-        label: t(`columns.${key}`),
-      })),
-    [t]
+      columnOrder.filter(
+        (key) => MANDATORY_MARKET_COLUMNS.has(key) || !columnHidden[key],
+      ),
+    [columnOrder, columnHidden],
   );
 
   const autoRefreshOptions = useMemo(
@@ -130,7 +144,7 @@ export function MarketTableClient() {
                   ? t("autoRefresh.sec15")
                   : t("autoRefresh.sec30"),
       })),
-    [t]
+    [t],
   );
 
   function formatLifetime(ms: number): string {
@@ -176,7 +190,6 @@ export function MarketTableClient() {
         try {
           payload = await response.json();
         } catch {
-          /* non-JSON */
         }
 
         if (response.status === 401) {
@@ -218,7 +231,6 @@ export function MarketTableClient() {
       ignore = true;
       controller.abort();
     };
-    // Intentionally omit next-intl `t`/`tApi`/`tCommon` to avoid refetch loops on locale (tree remounts).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [endpoint, refreshKey, router]);
 
@@ -230,7 +242,7 @@ export function MarketTableClient() {
     const jitterFactor = 0.85 + Math.random() * 0.3;
     const delayMs = Math.max(
       3000,
-      Math.round(autoRefreshSeconds * 1000 * jitterFactor)
+      Math.round(autoRefreshSeconds * 1000 * jitterFactor),
     );
 
     const timeoutId = window.setTimeout(() => {
@@ -263,14 +275,147 @@ export function MarketTableClient() {
     setSortOrder("desc");
   }
 
-  const toolbarSelectLayout =
-    "w-full shrink-0 sm:w-auto sm:min-w-[9rem]";
+  function toggleColumnHidden(key: MarketColumnKey): void {
+    if (MANDATORY_MARKET_COLUMNS.has(key)) return;
+    setColumnHidden((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  function renderColumnHeader(key: MarketColumnKey) {
+    const label = t(marketColumnMessageKey(key));
+
+    if (isMarketSortColumn(key)) {
+      const isActive = sortBy === key;
+      return (
+        <th key={key} className={tableHeaderCell}>
+          <button
+            type="button"
+            onClick={() => toggleSort(key)}
+            className="inline-flex w-full max-w-full items-center justify-center gap-1.5 rounded-md text-inherit hover:text-zinc-900"
+          >
+            <span className="min-w-0">{label}</span>
+            {isActive ? (
+              sortOrder === "asc" ? (
+                <ChevronUp
+                  className="h-3.5 w-3.5 shrink-0 text-zinc-500"
+                  aria-hidden
+                />
+              ) : (
+                <ChevronDown
+                  className="h-3.5 w-3.5 shrink-0 text-zinc-500"
+                  aria-hidden
+                />
+              )
+            ) : null}
+          </button>
+        </th>
+      );
+    }
+
+    return (
+      <th key={key} className={tableHeaderCell}>
+        {label}
+      </th>
+    );
+  }
+
+  function renderColumnCell(row: MarketRow, key: MarketColumnKey) {
+    switch (key) {
+      case "pair":
+        return (
+          <td
+            key={key}
+            className={`${tableBodyCell} font-semibold text-zinc-950 tabular-nums`}
+          >
+            {row.pair}
+          </td>
+        );
+      case "buyRate":
+        return (
+          <td
+            key={key}
+            className={`${tableBodyCell} tabular-nums text-zinc-800`}
+          >
+            {formatRate(row.buyRate)}
+          </td>
+        );
+      case "sellRate":
+        return (
+          <td
+            key={key}
+            className={`${tableBodyCell} tabular-nums text-zinc-800`}
+          >
+            {formatRate(row.sellRate)}
+          </td>
+        );
+      case "volume24hUsd":
+        return (
+          <td
+            key={key}
+            className={`${tableBodyCell} tabular-nums text-zinc-800`}
+          >
+            {formatVolumeUsd(row.volume24hUsd, locale)}
+          </td>
+        );
+      case "profitPercent":
+        return (
+          <td
+            key={key}
+            className={`${tableBodyCell} font-medium tabular-nums ${
+              row.profitPercent >= 0 ? "text-green-600" : "text-red-600"
+            }`}
+          >
+            {row.profitDisplay}
+          </td>
+        );
+      case "spreadPercent":
+        return (
+          <td
+            key={key}
+            className={`${tableBodyCell} font-medium tabular-nums ${
+              row.spreadPercent >= 0 ? "text-green-600" : "text-red-600"
+            }`}
+          >
+            {formatPercent(row.spreadPercent)}
+          </td>
+        );
+      case "lifetimeMs":
+        return (
+          <td key={key} className={`${tableBodyCell} text-zinc-800`}>
+            {formatLifetime(row.lifetimeMs)}
+          </td>
+        );
+      case "buyExchange":
+        return (
+          <td key={key} className={`${tableBodyCell} text-zinc-800`}>
+            {row.buyExchange}
+          </td>
+        );
+      case "sellExchange":
+        return (
+          <td key={key} className={`${tableBodyCell} text-zinc-800`}>
+            {row.sellExchange}
+          </td>
+        );
+      case "withdrawalNetwork":
+        return (
+          <td key={key} className={`${tableBodyCell} text-zinc-800`}>
+            <WithdrawalNetworksCell entries={row.withdrawalNetworkEntries} />
+          </td>
+        );
+      default: {
+        const _exhaustive: never = key;
+        return _exhaustive;
+      }
+    }
+  }
+
+  const toolbarSelectLayout = "w-full shrink-0 sm:w-auto sm:min-w-[9rem]";
 
   return (
     <main className="min-h-screen p-3 md:p-6">
-      <section className="mx-auto w-full min-w-0 max-w-7xl rounded-xl bg-white p-3 shadow-sm md:p-5">
-        <div className="mb-4 flex min-w-0 flex-col gap-3 md:flex-row md:items-start md:justify-between md:gap-4">
-          <h1 className="shrink-0 text-xl font-semibold text-zinc-900">
+      <section className="mx-auto w-full min-w-0 max-w-7xl rounded-2xl border border-zinc-100 bg-white p-4 shadow-sm md:p-6">
+        <div className="mb-5 flex min-w-0 flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-6">
+          <h1 className="shrink-0 text-2xl font-bold tracking-tight text-zinc-950">
             {t("title")}
           </h1>
           <div className="flex min-w-0 w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-2">
@@ -293,28 +438,54 @@ export function MarketTableClient() {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder={t("searchPlaceholder")}
-              className="min-w-0 w-full rounded-md border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none ring-0 focus:border-zinc-400 sm:min-w-[10rem] sm:flex-1 sm:basis-[12rem] md:max-w-md"
+              className="h-9 min-w-0 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-900 shadow-sm outline-none ring-0 placeholder:text-zinc-400 focus:border-zinc-400 sm:min-w-[10rem] sm:flex-1 sm:basis-[12rem] md:max-w-md"
             />
-            <div className="flex w-full gap-2 sm:w-auto sm:shrink-0">
-              <button
-                type="button"
-                onClick={() => setRefreshKey((current) => current + 1)}
-                className="flex-1 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-100 sm:flex-none md:text-sm"
-              >
-                {isRefreshing ? t("refreshing") : t("refresh")}
-              </button>
-              <button
-                type="button"
-                onClick={logout}
-                className="flex-1 rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-50 sm:flex-none md:text-sm"
-              >
-                {t("logout")}
-              </button>
+            <div
+              ref={columnSettingsRef}
+              className="relative w-full sm:w-auto sm:shrink-0"
+            >
+              <div className="flex w-full gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRefreshKey((current) => current + 1)}
+                  className={`${toolbarButtonClass} flex-1 bg-zinc-50 hover:bg-zinc-100 sm:flex-none sm:px-4`}
+                >
+                  {isRefreshing ? t("refreshing") : t("refresh")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setColumnSettingsOpen((open) => !open)}
+                  aria-expanded={columnSettingsOpen}
+                  aria-haspopup="dialog"
+                  className={`${toolbarButtonClass} flex-1 bg-white hover:bg-zinc-50 sm:flex-none sm:w-9 sm:px-0`}
+                >
+                  <Settings
+                    className="h-[18px] w-[18px] text-zinc-700"
+                    strokeWidth={1.75}
+                  />
+                </button>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className={`${toolbarButtonClass} flex-1 bg-white hover:bg-zinc-50 sm:flex-none sm:px-4`}
+                >
+                  {t("logout")}
+                </button>
+              </div>
+              <MarketColumnSettingsPopover
+                open={columnSettingsOpen}
+                onClose={() => setColumnSettingsOpen(false)}
+                containerRef={columnSettingsRef}
+                columnOrder={columnOrder}
+                onColumnOrderChange={setColumnOrder}
+                columnHidden={columnHidden}
+                onToggleColumnHidden={toggleColumnHidden}
+              />
             </div>
           </div>
         </div>
 
-        <div className="mb-3 text-xs text-zinc-500">
+        <div className="mb-4 text-xs leading-relaxed text-zinc-500">
           {updatedAt
             ? t("lastUpdated", {
                 time: new Date(updatedAt).toLocaleString(locale),
@@ -335,32 +506,32 @@ export function MarketTableClient() {
 
         {!error && !isLoading ? (
           <>
-            <div className="space-y-2 md:hidden">
+            <div className="space-y-3 md:hidden">
               {rows.length === 0 ? (
-                <div className="rounded-md border border-zinc-100 px-3 py-6 text-center text-sm text-zinc-500">
+                <div className="rounded-xl border border-zinc-100 bg-zinc-50/50 px-4 py-8 text-center text-sm text-zinc-500">
                   {t("empty")}
                 </div>
               ) : null}
               {rows.map((row) => (
                 <article
                   key={row.id}
-                  className="rounded-lg border border-zinc-100 p-3"
+                  className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm"
                 >
-                  <div className="mb-2 flex items-center justify-between">
-                    <p className="text-sm font-semibold text-zinc-900">
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-zinc-950">
                       {row.pair}
                     </p>
                     <p
                       className={`text-xs font-medium ${
                         row.profitPercent >= 0
-                          ? "text-emerald-600"
-                          : "text-rose-600"
+                          ? "text-green-600"
+                          : "text-red-600"
                       }`}
                     >
                       {row.profitDisplay}
                     </p>
                   </div>
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-zinc-600">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs leading-relaxed text-zinc-600">
                     <span>
                       {t("mobileBuy")} {formatRate(row.buyRate)}
                     </span>
@@ -369,7 +540,7 @@ export function MarketTableClient() {
                     </span>
                     <span>
                       {t("mobileVolume")}{" "}
-                      {formatUsd(row.volume24hUsd, locale)}
+                      {formatVolumeUsd(row.volume24hUsd, locale)}
                     </span>
                     <span>
                       {t("mobileSpread")} {formatPercent(row.spreadPercent)}
@@ -394,96 +565,49 @@ export function MarketTableClient() {
               ))}
             </div>
 
-            <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[1080px] border-separate border-spacing-0">
+            <div className="hidden overflow-x-auto rounded-xl border border-zinc-100 md:block">
+              <table
+                className="w-full min-w-0 table-fixed border-collapse"
+                style={{
+                  minWidth: `max(100%, ${visibleOrderedColumns.length * 5.5}rem)`,
+                }}
+              >
+                <colgroup>
+                  {visibleOrderedColumns.map((key) => (
+                    <col
+                      key={key}
+                      style={{
+                        width: `${100 / visibleOrderedColumns.length}%`,
+                      }}
+                    />
+                  ))}
+                </colgroup>
                 <thead>
                   <tr>
-                    {sortableColumns.map((column) => {
-                      const isActive = sortBy === column.key;
-                      return (
-                        <th
-                          key={column.key}
-                          className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 text-left text-xs font-medium uppercase tracking-wide text-zinc-600"
-                        >
-                          <button
-                            type="button"
-                            onClick={() => toggleSort(column.key)}
-                            className="inline-flex items-center gap-1"
-                          >
-                            {column.label}
-                            {isActive ? (sortOrder === "asc" ? "▲" : "▼") : ""}
-                          </button>
-                        </th>
-                      );
-                    })}
-                    <th className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 text-left text-xs font-medium tracking-wide text-zinc-600">
-                      {t("thBuyExchange")}
-                    </th>
-                    <th className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 text-left text-xs font-medium tracking-wide text-zinc-600">
-                      {t("thSellExchange")}
-                    </th>
-                    <th className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 text-left text-xs font-medium tracking-wide text-zinc-600">
-                      {t("thNetwork")}
-                    </th>
+                    {visibleOrderedColumns.map((key) =>
+                      renderColumnHeader(key),
+                    )}
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="bg-white">
                   {rows.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={10}
-                        className="px-3 py-8 text-center text-sm text-zinc-500"
+                        colSpan={Math.max(visibleOrderedColumns.length, 1)}
+                        className="px-4 py-12 text-center text-sm text-zinc-500"
                       >
                         {t("empty")}
                       </td>
                     </tr>
                   ) : null}
                   {rows.map((row) => (
-                    <tr key={row.id}>
-                      <td className="border-b border-zinc-100 px-3 py-3 text-sm font-medium text-zinc-900">
-                        {row.pair}
-                      </td>
-                      <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
-                        {formatRate(row.buyRate)}
-                      </td>
-                      <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
-                        {formatRate(row.sellRate)}
-                      </td>
-                      <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
-                        {formatUsd(row.volume24hUsd, locale)}
-                      </td>
-                      <td
-                        className={`border-b border-zinc-100 px-3 py-3 text-sm ${
-                          row.profitPercent >= 0
-                            ? "text-emerald-600"
-                            : "text-rose-600"
-                        }`}
-                      >
-                        {row.profitDisplay}
-                      </td>
-                      <td
-                        className={`border-b border-zinc-100 px-3 py-3 text-sm ${
-                          row.spreadPercent >= 0
-                            ? "text-emerald-600"
-                            : "text-rose-600"
-                        }`}
-                      >
-                        {formatPercent(row.spreadPercent)}
-                      </td>
-                      <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
-                        {formatLifetime(row.lifetimeMs)}
-                      </td>
-                      <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
-                        {row.buyExchange}
-                      </td>
-                      <td className="border-b border-zinc-100 px-3 py-3 text-sm text-zinc-700">
-                        {row.sellExchange}
-                      </td>
-                      <td className="border-b border-zinc-100 px-3 py-3 text-sm">
-                        <WithdrawalNetworksCell
-                          entries={row.withdrawalNetworkEntries}
-                        />
-                      </td>
+                    <tr
+                      key={row.id}
+                      className="transition-colors hover:bg-zinc-50/80"
+                    >
+                      {visibleOrderedColumns.map((key) =>
+                        renderColumnCell(row, key),
+                      )}
                     </tr>
                   ))}
                 </tbody>
