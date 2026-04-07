@@ -11,6 +11,10 @@ import { apiErrorMessageFromPayload } from "@/lib/api-client-messages";
 import type { MarketRow, SortBy, SortOrder } from "@/types/market";
 import { MarketColumnSettingsPopover } from "@/components/drag-and-drop/column-settings-popover";
 import {
+  loadMarketColumnPreferences,
+  saveMarketColumnPreferences,
+} from "@/lib/market-table-columns-storage";
+import {
   defaultMarketColumnHidden,
   defaultMarketColumnOrder,
   isMarketSortColumn,
@@ -120,6 +124,23 @@ export function MarketTableClient() {
   >(defaultMarketColumnHidden);
 
   const columnSettingsRef = useRef<HTMLDivElement>(null);
+  const skipNextColumnPrefsPersist = useRef(true);
+
+  useEffect(() => {
+    const saved = loadMarketColumnPreferences();
+    if (saved) {
+      setColumnOrder(saved.order);
+      setColumnHidden(saved.hidden);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (skipNextColumnPrefsPersist.current) {
+      skipNextColumnPrefsPersist.current = false;
+      return;
+    }
+    saveMarketColumnPreferences(columnOrder, columnHidden);
+  }, [columnOrder, columnHidden]);
 
   const visibleOrderedColumns = useMemo(
     () =>
@@ -189,8 +210,7 @@ export function MarketTableClient() {
 
         try {
           payload = await response.json();
-        } catch {
-        }
+        } catch {}
 
         if (response.status === 401) {
           router.push("/login");
