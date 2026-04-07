@@ -12,6 +12,7 @@ export type SortOrder = "asc" | "desc";
 export type MarketRow = {
   id: string;
   pair: string;
+  cmcid?: number | null;
   buyExchange: string;
   sellExchange: string;
   buyRate: number;

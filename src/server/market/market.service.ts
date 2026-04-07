@@ -15,6 +15,18 @@ function asNumber(value: unknown): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function parseCmcId(value: unknown): number | null {
+  if (value == null || value === "") {
+    return null;
+  }
+  const n =
+    typeof value === "string" ? Number(value.trim()) : Number(value);
+  if (!Number.isFinite(n) || n <= 0) {
+    return null;
+  }
+  return Math.trunc(n);
+}
+
 function titleCase(value: string): string {
   if (!value) {
     return "";
@@ -199,10 +211,12 @@ function normalizeLiveRow(
   const network = selectNetwork(row.chainsBuy, row.chainsSell);
   const profitPercent = asNumber(row.exitProfitIndex ?? row.profitIndexAvg);
   const profitUsd = pickExpectedProfitUsd(row, network);
+  const cmcid = parseCmcId(row.cmcid);
 
   return {
     id: `${row.symbol ?? "asset"}-${buyExchange}-${sellExchange}-${index}`,
     pair,
+    ...(cmcid != null ? { cmcid } : {}),
     buyExchange,
     sellExchange,
     buyRate,

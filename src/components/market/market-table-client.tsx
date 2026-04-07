@@ -23,6 +23,7 @@ import {
   MANDATORY_MARKET_COLUMNS,
 } from "@/lib/market-table-columns";
 import { ChevronDown, ChevronUp, Settings } from "lucide-react";
+import Image from "next/image";
 
 type ApiResponse = {
   rows: MarketRow[];
@@ -39,6 +40,7 @@ type ApiResponse = {
 };
 
 const AUTO_REFRESH_VALUES = [0, 5, 10, 15, 30] as const;
+const COIN_ICON_BASE = "https://s3.arbitragescanner.io/w/coin";
 
 const toolbarButtonClass =
   "inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-zinc-200 px-3 text-sm font-medium text-zinc-800 shadow-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-400";
@@ -94,6 +96,47 @@ function WithdrawalNetworksCell({
         </span>
       ))}
     </>
+  );
+}
+
+function pairInitial(pair: string): string {
+  const base = pair.split("-")[0]?.trim() || pair;
+  const ch = base.charAt(0);
+  return ch ? ch.toUpperCase() : "?";
+}
+
+function PairWithLogo({ row }: { row: MarketRow }) {
+  const cmcid = row.cmcid;
+  const hasIconId = cmcid != null && cmcid > 0;
+  const [imgFailed, setImgFailed] = useState(false);
+
+  const showImage = hasIconId && !imgFailed;
+  const initial = pairInitial(row.pair);
+
+  return (
+    <div className="inline-flex max-w-full items-center gap-2 whitespace-nowrap">
+      <div className="relative h-6 w-6 shrink-0 overflow-hidden rounded-full bg-zinc-200">
+        {showImage ? (
+          <Image
+            src={`${COIN_ICON_BASE}/${cmcid}.png`}
+            alt=""
+            className="h-full w-full object-cover"
+            loading="lazy"
+            fetchPriority="low"
+            decoding="async"
+            onError={() => setImgFailed(true)}
+            width={24}
+            height={24}
+          />
+        ) : null}
+        {!showImage ? (
+          <span className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-zinc-600">
+            {initial}
+          </span>
+        ) : null}
+      </div>
+      <span className="min-w-0">{row.pair}</span>
+    </div>
   );
 }
 
@@ -344,9 +387,12 @@ export function MarketTableClient() {
         return (
           <td
             key={key}
-            className={`${tableBodyCell} font-semibold text-zinc-950 tabular-nums`}
+            className={`${tableBodyCell} font-semibold text-zinc-950 tabular-nums whitespace-nowrap`}
           >
-            {row.pair}
+            <PairWithLogo
+              key={`${row.id}-${row.cmcid ?? ""}`}
+              row={row}
+            />
           </td>
         );
       case "buyRate":
@@ -538,8 +584,11 @@ export function MarketTableClient() {
                   className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm"
                 >
                   <div className="mb-3 flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-zinc-950">
-                      {row.pair}
+                    <p className="min-w-0 text-sm font-semibold text-zinc-950">
+                      <PairWithLogo
+                        key={`${row.id}-${row.cmcid ?? ""}`}
+                        row={row}
+                      />
                     </p>
                     <p
                       className={`text-xs font-medium ${
@@ -586,22 +635,7 @@ export function MarketTableClient() {
             </div>
 
             <div className="hidden overflow-x-auto rounded-xl border border-zinc-100 md:block">
-              <table
-                className="w-full min-w-0 table-fixed border-collapse"
-                style={{
-                  minWidth: `max(100%, ${visibleOrderedColumns.length * 5.5}rem)`,
-                }}
-              >
-                <colgroup>
-                  {visibleOrderedColumns.map((key) => (
-                    <col
-                      key={key}
-                      style={{
-                        width: `${100 / visibleOrderedColumns.length}%`,
-                      }}
-                    />
-                  ))}
-                </colgroup>
+              <table className="w-max min-w-full border-collapse">
                 <thead>
                   <tr>
                     {visibleOrderedColumns.map((key) =>
