@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { apiErrorMessageFromPayload } from "@/lib/api-client-messages";
+import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -50,10 +51,20 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative min-h-screen flex items-center justify-center p-6">
+    <main className="relative min-h-screen flex flex-col items-center justify-center gap-8 p-6 bg-zinc-50">
       <div className="absolute right-4 top-4 md:right-6 md:top-6">
         <LocaleSwitcher />
       </div>
+
+      <Image
+        src={"/p2p_flow_logo.png"}
+        alt="P2P Flow"
+        className="w-48 sm:w-64 md:w-80 h-auto select-none pointer-events-none"
+        priority
+        width={712}
+        height={129}
+      />
+
       <section className="w-full max-w-md rounded-xl bg-white p-6 shadow-sm">
         <h1 className="mb-2 text-2xl font-semibold text-zinc-900">
           {t("title")}
