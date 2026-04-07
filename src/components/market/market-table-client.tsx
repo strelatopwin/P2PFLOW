@@ -210,8 +210,7 @@ export function MarketTableClient() {
 
         try {
           payload = await response.json();
-        } catch {
-        }
+        } catch {}
 
         if (response.status === 401) {
           router.push("/login");
