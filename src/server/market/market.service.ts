@@ -135,6 +135,55 @@ function pickExpectedProfitUsd(
   return null;
 }
 
+function pickChainByNetwork(
+  row: ProfitArbitrageRawWebDataRow,
+  networkKey: string,
+): ProfitArbitrageRawChain | undefined {
+  const key = networkKey.trim().toLowerCase();
+  if (!key || key === "unknown") {
+    return undefined;
+  }
+  return row.chainsBuy?.find(
+    (item) => (item.chain ?? "").trim().toLowerCase() === key,
+  );
+}
+
+function computeProfitPercent(
+  row: ProfitArbitrageRawWebDataRow,
+  networkKey: string,
+  profitUsd: number | null,
+): number {
+  const volume = asNumber(row.volumeUsd ?? row.volume);
+  if (profitUsd != null && volume > 0) {
+    return (profitUsd / volume) * 100;
+  }
+  const chain = pickChainByNetwork(row, networkKey);
+  if (
+    chain &&
+    chain.expectedProfitIndex != null &&
+    Number.isFinite(Number(chain.expectedProfitIndex))
+  ) {
+    return asNumber(chain.expectedProfitIndex);
+  }
+  return asNumber(row.profitIndexAvg);
+}
+
+function reconcileSpreadWithNetProfit(
+  grossSpreadPercent: number,
+  profitPercent: number,
+): number {
+  if (
+    profitPercent !== 0 &&
+    grossSpreadPercent !== 0 &&
+    Math.sign(grossSpreadPercent) !== Math.sign(profitPercent) &&
+    Math.abs(grossSpreadPercent) > Math.abs(profitPercent) &&
+    Math.abs(grossSpreadPercent) < 2
+  ) {
+    return profitPercent;
+  }
+  return grossSpreadPercent;
+}
+
 function formatProfitDisplay(
   percentValue: number,
   usd: number | null,
@@ -190,15 +239,25 @@ function normalizeLiveRow(
   index: number,
 ): MarketRow {
   const pair = normalizePair(row);
-  const buyRate = asNumber(row.buyPriceAvg);
-  const sellRate = asNumber(row.sellPriceAvg);
-  const spreadPercent =
-    buyRate > 0 ? ((sellRate - buyRate) / buyRate) * 100 : 0;
+  const buyRate =
+    row.buyPriceMin != null && Number.isFinite(Number(row.buyPriceMin))
+      ? asNumber(row.buyPriceMin)
+      : asNumber(row.buyPriceAvg);
+  const sellRate =
+    row.sellPriceMax != null && Number.isFinite(Number(row.sellPriceMax))
+      ? asNumber(row.sellPriceMax)
+      : asNumber(row.sellPriceAvg);
   const buyExchange = titleCase(row.exchangeBuy ?? "Unknown");
   const sellExchange = titleCase(row.exchangeSell ?? "Unknown");
   const network = selectNetwork(row.chainsBuy, row.chainsSell);
-  const profitPercent = asNumber(row.exitProfitIndex ?? row.profitIndexAvg);
   const profitUsd = pickExpectedProfitUsd(row, network);
+  const profitPercent = computeProfitPercent(row, network, profitUsd);
+  const grossSpreadPercent =
+    buyRate > 0 ? ((buyRate - sellRate) / buyRate) * 100 : 0;
+  const spreadPercent = reconcileSpreadWithNetProfit(
+    grossSpreadPercent,
+    profitPercent,
+  );
 
   return {
     id: `${row.symbol ?? "asset"}-${buyExchange}-${sellExchange}-${index}`,
