@@ -278,6 +278,10 @@ export function MarketTableClient() {
           setRows(data.rows ?? []);
           setUpdatedAt(data.meta?.updatedAt ?? "");
           setDataSource(data.meta?.source ?? "mock");
+          const upstreamMsg = data.meta?.error?.trim();
+          if (upstreamMsg) {
+            setError(`${t("loadErrorPrefix")} ${upstreamMsg}`);
+          }
         }
       } catch (caught) {
         if (!ignore && !controller.signal.aborted) {
@@ -573,16 +577,16 @@ export function MarketTableClient() {
         </div>
 
         {error ? (
-          <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+          <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">
             {error}
           </div>
         ) : null}
 
-        {!error && isLoading ? (
+        {isLoading ? (
           <div className="py-8 text-sm text-zinc-500">{t("loading")}</div>
         ) : null}
 
-        {!error && !isLoading ? (
+        {!isLoading ? (
           <>
             <div className="space-y-3 md:hidden">
               {rows.length === 0 ? (

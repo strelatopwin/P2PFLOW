@@ -1,4 +1,4 @@
-import { applyQueryToMarketRows, getMarketRows } from "@/lib/market-data";
+import { applyQueryToMarketRows } from "@/server/market/apply-query-to-market-rows";
 import { fetchProfitArbitrageWebData } from "@/server/profit-arbitrage-client/profit-arbitrage-client";
 import type {
   ProfitArbitrageRawWebDataRow,
@@ -293,14 +293,9 @@ function normalizeLiveRow(
 export async function getMarketResponse(
   query: MarketRequestQuery,
 ): Promise<MarketResponsePayload> {
-  const { search, sortBy, sortOrder, limit, useMockOnly, includeDebug } = query;
+  const { search, sortBy, sortOrder, limit, useMockOnly } = query;
 
-  let rows = getMarketRows({
-    search,
-    sortBy,
-    sortOrder,
-    limit,
-  });
+  let rows: MarketRow[] = [];
   let source: "live" | "mock" = "mock";
   let error: string | null = null;
 
@@ -321,6 +316,7 @@ export async function getMarketResponse(
       source = "live";
     } catch (caught) {
       error = caught instanceof Error ? caught.message : "Unknown live error";
+      source = "live";
     }
   }
 
@@ -334,7 +330,7 @@ export async function getMarketResponse(
       total: rows.length,
       source,
       updatedAt: new Date().toISOString(),
-      ...(includeDebug ? { error } : {}),
+      error,
     },
   };
 }
