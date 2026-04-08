@@ -13,6 +13,7 @@ export type ProfitArbitrageRawChain = {
 };
 
 export type ProfitArbitrageRawWebDataRow = {
+  cmcid?: number | string;
   symbol?: string;
   uniSymbol?: string;
   originalSymbol?: string;
