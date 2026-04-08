@@ -3,6 +3,10 @@
 :root {
   --app-background: #f3f4f6;
   --app-foreground: #1f2937;
+  --color-red-bg: #fee2e2;
+  --color-red: #b91c1c;
+  --color-green-bg: #dcfce7;
+  --color-green: #15803d;
 }
 
 @theme inline {
