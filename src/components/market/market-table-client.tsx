@@ -48,8 +48,13 @@ const toolbarButtonClass =
 const tableHeaderCell =
   "border-b border-zinc-200 bg-zinc-50 px-3 py-3.5 text-center text-[13px] font-semibold leading-tight text-zinc-600 break-words";
 
-const tableBodyCell =
-  "border-b border-zinc-100 px-3 py-3.5 text-center align-middle text-sm leading-snug text-zinc-800 break-words";
+const tableBodyCellBase =
+  "border-b border-zinc-100 px-3 py-3.5 text-center align-middle text-sm leading-snug break-words";
+
+const tableBodyCell = `${tableBodyCellBase} text-zinc-800`;
+
+const spreadTagBase =
+  "mx-auto inline-flex w-max max-w-full items-center gap-1 rounded-2xl px-3 py-1 text-xs font-medium leading-4 tabular-nums transition-[color,background-color] duration-200";
 
 function formatVolumeUsd(value: number, locale: string): string {
   if (value >= 1_000_000) {
@@ -426,8 +431,10 @@ export function MarketTableClient() {
         return (
           <td
             key={key}
-            className={`${tableBodyCell} font-medium tabular-nums ${
-              row.profitPercent >= 0 ? "text-green-600" : "text-red-600"
+            className={`${tableBodyCellBase} font-medium tabular-nums ${
+              row.profitPercent >= 0
+                ? "text-(--color-green)"
+                : "text-(--color-red)"
             }`}
           >
             {row.profitDisplay}
@@ -435,13 +442,18 @@ export function MarketTableClient() {
         );
       case "spreadPercent":
         return (
-          <td
-            key={key}
-            className={`${tableBodyCell} font-medium tabular-nums ${
-              row.spreadPercent >= 0 ? "text-green-600" : "text-red-600"
-            }`}
-          >
-            {formatPercent(row.spreadPercent)}
+          <td key={key} className={tableBodyCell}>
+            <div dir="ltr" className="flex justify-center">
+              <span
+                className={`${spreadTagBase} ${
+                  row.spreadPercent >= 0
+                    ? "bg-(--color-green-bg) text-(--color-green)"
+                    : "bg-(--color-red-bg) text-(--color-red)"
+                }`}
+              >
+                {formatPercent(row.spreadPercent)}
+              </span>
+            </div>
           </td>
         );
       case "lifetimeMs":
@@ -593,8 +605,8 @@ export function MarketTableClient() {
                     <p
                       className={`text-xs font-medium ${
                         row.profitPercent >= 0
-                          ? "text-green-600"
-                          : "text-red-600"
+                          ? "text-(--color-green)"
+                          : "text-(--color-red)"
                       }`}
                     >
                       {row.profitDisplay}
@@ -611,8 +623,18 @@ export function MarketTableClient() {
                       {t("mobileVolume")}{" "}
                       {formatVolumeUsd(row.volume24hUsd, locale)}
                     </span>
-                    <span>
-                      {t("mobileSpread")} {formatPercent(row.spreadPercent)}
+                    <span className="flex flex-wrap items-center gap-1.5">
+                      <span className="shrink-0">{t("mobileSpread")}</span>
+                      <span
+                        dir="ltr"
+                        className={`${spreadTagBase} ${
+                          row.spreadPercent >= 0
+                            ? "bg-(--color-green-bg) text-(--color-green)"
+                            : "bg-(--color-red-bg) text-(--color-red)"
+                        }`}
+                      >
+                        {formatPercent(row.spreadPercent)}
+                      </span>
                     </span>
                     <span>
                       {t("mobileBuyExchange")} {row.buyExchange}
