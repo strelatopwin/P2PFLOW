@@ -21,7 +21,11 @@ export type ProfitArbitrageRawWebDataRow = {
   exchangeSellSymbol?: string;
   exchangeBuy?: string;
   exchangeSell?: string;
+  buyPriceMin?: number;
+  buyPriceMax?: number;
   buyPriceAvg?: number;
+  sellPriceMin?: number;
+  sellPriceMax?: number;
   sellPriceAvg?: number;
   volumeUsd?: number;
   volume?: number;

@@ -11,7 +11,7 @@ const BASE_ROWS: MarketRow[] = [
     volume24hUsd: 1250000,
     profitPercent: 0.25,
     profitDisplay: "0.25% ($1.10, ETHEREUM)",
-    spreadPercent: 0.43,
+    spreadPercent: -0.41,
     lifetimeMs: 339000,
     network: "ETHEREUM",
     withdrawalNetworkEntries: [
@@ -28,7 +28,7 @@ const BASE_ROWS: MarketRow[] = [
     volume24hUsd: 4239560,
     profitPercent: -1.2,
     profitDisplay: "-1.20% (-$2.15, ETHEREUM)",
-    spreadPercent: -0.08,
+    spreadPercent: 1.15,
     lifetimeMs: 31892,
     network: "ETHEREUM",
     withdrawalNetworkEntries: [
@@ -45,7 +45,7 @@ const BASE_ROWS: MarketRow[] = [
     volume24hUsd: 5960000,
     profitPercent: -0.19,
     profitDisplay: "-0.19% (-$0.42, ARBITRUM)",
-    spreadPercent: -0.03,
+    spreadPercent: 0.33,
     lifetimeMs: 1917000,
     network: "ARBITRUM",
     withdrawalNetworkEntries: [
@@ -62,7 +62,7 @@ const BASE_ROWS: MarketRow[] = [
     volume24hUsd: 3272530,
     profitPercent: -0.72,
     profitDisplay: "-0.72% (-$0.55, BNB)",
-    spreadPercent: 0.13,
+    spreadPercent: 0.39,
     lifetimeMs: 0,
     network: "BNB",
     withdrawalNetworkEntries: [
@@ -79,7 +79,7 @@ const BASE_ROWS: MarketRow[] = [
     volume24hUsd: 77593.26,
     profitPercent: 0.31,
     profitDisplay: "0.31% ($0.366, BASE)",
-    spreadPercent: 0.12,
+    spreadPercent: -0.31,
     lifetimeMs: 367000,
     network: "BASE",
     withdrawalNetworkEntries: [
@@ -96,7 +96,7 @@ const BASE_ROWS: MarketRow[] = [
     volume24hUsd: 72425.31,
     profitPercent: 0.22,
     profitDisplay: "0.22% ($0.29, BASE)",
-    spreadPercent: 0.18,
+    spreadPercent: -0.27,
     lifetimeMs: 361000,
     network: "BASE",
     withdrawalNetworkEntries: [
@@ -113,7 +113,7 @@ const BASE_ROWS: MarketRow[] = [
     volume24hUsd: 24900340,
     profitPercent: 0.38,
     profitDisplay: "0.38% ($0.88, SOLANA)",
-    spreadPercent: 0.38,
+    spreadPercent: -0.38,
     lifetimeMs: 93200,
     network: "SOLANA",
     withdrawalNetworkEntries: [
@@ -130,7 +130,7 @@ const BASE_ROWS: MarketRow[] = [
     volume24hUsd: 52700000,
     profitPercent: 0.26,
     profitDisplay: "0.26% ($1.28, ETHEREUM)",
-    spreadPercent: 0.26,
+    spreadPercent: -0.26,
     lifetimeMs: 124000,
     network: "ETHEREUM",
     withdrawalNetworkEntries: [
