@@ -19,8 +19,7 @@ function parseCmcId(value: unknown): number | null {
   if (value == null || value === "") {
     return null;
   }
-  const n =
-    typeof value === "string" ? Number(value.trim()) : Number(value);
+  const n = typeof value === "string" ? Number(value.trim()) : Number(value);
   if (!Number.isFinite(n) || n <= 0) {
     return null;
   }

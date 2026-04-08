@@ -278,8 +278,10 @@ export function MarketTableClient() {
           setRows(data.rows ?? []);
           setUpdatedAt(data.meta?.updatedAt ?? "");
           setDataSource(data.meta?.source ?? "mock");
-          const upstreamMsg = data.meta?.error?.trim();
-          if (upstreamMsg) {
+          const upstreamRaw = data.meta?.error;
+          const upstreamMsg =
+            typeof upstreamRaw === "string" ? upstreamRaw.trim() : "";
+          if (upstreamMsg.length > 0) {
             setError(`${t("loadErrorPrefix")} ${upstreamMsg}`);
           }
         }
@@ -398,10 +400,7 @@ export function MarketTableClient() {
             key={key}
             className={`${tableBodyCell} font-semibold text-zinc-950 tabular-nums whitespace-nowrap`}
           >
-            <PairWithLogo
-              key={`${row.id}-${row.cmcid ?? ""}`}
-              row={row}
-            />
+            <PairWithLogo key={`${row.id}-${row.cmcid ?? ""}`} row={row} />
           </td>
         );
       case "buyRate":
@@ -577,7 +576,11 @@ export function MarketTableClient() {
         </div>
 
         {error ? (
-          <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600"
+          >
             {error}
           </div>
         ) : null}
