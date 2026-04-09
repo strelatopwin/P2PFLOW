@@ -183,13 +183,7 @@ function reconcileSpreadWithNetProfit(
   grossSpreadPercent: number,
   profitPercent: number,
 ): number {
-  if (
-    profitPercent !== 0 &&
-    grossSpreadPercent !== 0 &&
-    Math.sign(grossSpreadPercent) !== Math.sign(profitPercent) &&
-    Math.abs(grossSpreadPercent) > Math.abs(profitPercent) &&
-    Math.abs(grossSpreadPercent) < 2
-  ) {
+  if (profitPercent > 0) {
     return profitPercent;
   }
   return grossSpreadPercent;
@@ -300,9 +294,7 @@ export async function getMarketResponse(
 
   if (!useMockOnly) {
     try {
-      const livePayload = await fetchProfitArbitrageWebData(
-        Math.max(limit * 3, 150),
-      );
+      const livePayload = await fetchProfitArbitrageWebData(limit);
       const normalizedLiveRows = livePayload.map((row, index) =>
         normalizeLiveRow(row, index),
       );
