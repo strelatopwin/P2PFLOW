@@ -198,6 +198,19 @@ export function MarketTableClient() {
     [columnOrder, columnHidden],
   );
 
+  const mobileCardDetailKeys = useMemo(
+    () =>
+      visibleOrderedColumns.filter(
+        (key) => key !== "pair" && key !== "profitPercent",
+      ),
+    [visibleOrderedColumns],
+  );
+
+  const showMobileProfitInHeader = useMemo(
+    () => visibleOrderedColumns.includes("profitPercent"),
+    [visibleOrderedColumns],
+  );
+
   const autoRefreshOptions = useMemo(
     () =>
       AUTO_REFRESH_VALUES.map((value) => ({
@@ -490,6 +503,82 @@ export function MarketTableClient() {
     }
   }
 
+  function renderMobileDetailField(row: MarketRow, key: MarketColumnKey) {
+    const textLine = "text-xs leading-relaxed text-zinc-600";
+
+    switch (key) {
+      case "pair":
+      case "profitPercent":
+        return null;
+      case "buyRate":
+        return (
+          <span key={key} className={textLine}>
+            {t("mobileBuy")} {formatRate(row.buyRate)}
+          </span>
+        );
+      case "sellRate":
+        return (
+          <span key={key} className={textLine}>
+            {t("mobileSell")} {formatRate(row.sellRate)}
+          </span>
+        );
+      case "volume24hUsd":
+        return (
+          <span key={key} className={textLine}>
+            {t("mobileVolume")} {formatVolumeUsd(row.volume24hUsd, locale)}
+          </span>
+        );
+      case "spreadPercent":
+        return (
+          <span
+            key={key}
+            className={`flex flex-wrap items-center gap-1.5 ${textLine}`}
+          >
+            <span className="shrink-0">{t("mobileSpread")}</span>
+            <span
+              dir="ltr"
+              className={`${spreadTagBase} ${
+                row.spreadPercent >= 0
+                  ? "bg-(--color-green-bg) text-(--color-green)"
+                  : "bg-(--color-red-bg) text-(--color-red)"
+              }`}
+            >
+              {formatPercent(row.spreadPercent)}
+            </span>
+          </span>
+        );
+      case "lifetimeMs":
+        return (
+          <span key={key} className={textLine}>
+            {t("mobileLifetime")} {formatLifetime(row.lifetimeMs)}
+          </span>
+        );
+      case "buyExchange":
+        return (
+          <span key={key} className={textLine}>
+            {t("mobileBuyExchange")} {row.buyExchange}
+          </span>
+        );
+      case "sellExchange":
+        return (
+          <span key={key} className={textLine}>
+            {t("mobileSellExchange")} {row.sellExchange}
+          </span>
+        );
+      case "withdrawalNetwork":
+        return (
+          <span key={key} className={`col-span-2 ${textLine}`}>
+            {t("mobileNetwork")}{" "}
+            <WithdrawalNetworksCell entries={row.withdrawalNetworkEntries} />
+          </span>
+        );
+      default: {
+        const _exhaustive: never = key;
+        return _exhaustive;
+      }
+    }
+  }
+
   const toolbarSelectLayout = "w-full shrink-0 sm:w-auto sm:min-w-[9rem]";
 
   return (
@@ -609,56 +698,25 @@ export function MarketTableClient() {
                         row={row}
                       />
                     </p>
-                    <p
-                      className={`text-xs font-medium ${
-                        row.profitPercent >= 0
-                          ? "text-(--color-green)"
-                          : "text-(--color-red)"
-                      }`}
-                    >
-                      {row.profitDisplay}
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs leading-relaxed text-zinc-600">
-                    <span>
-                      {t("mobileBuy")} {formatRate(row.buyRate)}
-                    </span>
-                    <span>
-                      {t("mobileSell")} {formatRate(row.sellRate)}
-                    </span>
-                    <span>
-                      {t("mobileVolume")}{" "}
-                      {formatVolumeUsd(row.volume24hUsd, locale)}
-                    </span>
-                    <span className="flex flex-wrap items-center gap-1.5">
-                      <span className="shrink-0">{t("mobileSpread")}</span>
-                      <span
-                        dir="ltr"
-                        className={`${spreadTagBase} ${
-                          row.spreadPercent >= 0
-                            ? "bg-(--color-green-bg) text-(--color-green)"
-                            : "bg-(--color-red-bg) text-(--color-red)"
+                    {showMobileProfitInHeader ? (
+                      <p
+                        className={`text-xs font-medium tabular-nums ${
+                          row.profitPercent >= 0
+                            ? "text-(--color-green)"
+                            : "text-(--color-red)"
                         }`}
                       >
-                        {formatPercent(row.spreadPercent)}
-                      </span>
-                    </span>
-                    <span>
-                      {t("mobileBuyExchange")} {row.buyExchange}
-                    </span>
-                    <span>
-                      {t("mobileSellExchange")} {row.sellExchange}
-                    </span>
-                    <span className="col-span-2 text-zinc-600">
-                      {t("mobileNetwork")}{" "}
-                      <WithdrawalNetworksCell
-                        entries={row.withdrawalNetworkEntries}
-                      />
-                    </span>
-                    <span>
-                      {t("mobileLifetime")} {formatLifetime(row.lifetimeMs)}
-                    </span>
+                        {row.profitDisplay}
+                      </p>
+                    ) : null}
                   </div>
+                  {mobileCardDetailKeys.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                      {mobileCardDetailKeys.map((key) =>
+                        renderMobileDetailField(row, key),
+                      )}
+                    </div>
+                  ) : null}
                 </article>
               ))}
             </div>
