@@ -1,6 +1,7 @@
 # Crypto Exchange Screener
 
 Проєкт на Next.js з:
+
 - live інтеграцією до ProfitArbitrage API,
 - email-only auth (без реєстрації/паролю),
 - access-control через Drizzle + Postgres,
@@ -100,4 +101,3 @@ DROP COLUMN IF EXISTS "status";
 - `403` на `/api/market` - юзер не approved.
 - `500` на login/status/market - перевір `DATABASE_URL`, `AUTH_SESSION_SECRET`, `PROFIT_ARBITRAGE_*`.
 - Не приходить Telegram - перевір `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, і що бот має право писати в чат.
-
