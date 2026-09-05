@@ -692,12 +692,12 @@ export function MarketTableClient() {
                   className="rounded-xl border border-zinc-100 bg-white p-4 shadow-sm"
                 >
                   <div className="mb-3 flex items-center justify-between gap-2">
-                    <p className="min-w-0 text-sm font-semibold text-zinc-950">
+                    <div className="min-w-0 text-sm font-semibold text-zinc-950">
                       <PairWithLogo
                         key={`${row.id}-${row.cmcid ?? ""}`}
                         row={row}
                       />
-                    </p>
+                    </div>
                     {showMobileProfitInHeader ? (
                       <p
                         className={`text-xs font-medium tabular-nums ${
